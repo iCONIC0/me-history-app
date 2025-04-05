@@ -33,7 +33,7 @@ export interface CreateEventData {
   category: string;
   event_date: string;
   location?: string;
-  journal_id?: number;
+  shared_journal_id?: number;
   media?: File[];
   metadata?: Record<string, any>;
 }
@@ -109,9 +109,9 @@ export const eventsService = {
         formData.append('category', data.category);
         formData.append('event_date', data.event_date);
         
-        // Agregar journal_id si existe
-        if (data.journal_id) {
-          formData.append('journal_id', data.journal_id.toString());
+        // Agregar shared_journal_id si existe
+        if (data.shared_journal_id) {
+          formData.append('shared_journal_id', data.shared_journal_id.toString());
         }
         
         // Agregar archivos
@@ -133,7 +133,7 @@ export const eventsService = {
           type: data.type,
           category: data.category,
           event_date: data.event_date,
-          journal_id: data.journal_id,
+          shared_journal_id: data.shared_journal_id,
           metadata: data.metadata || {},
         };
         

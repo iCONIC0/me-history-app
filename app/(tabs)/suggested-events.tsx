@@ -903,9 +903,9 @@ export default function SuggestedEventsScreen() {
         metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
       };
 
-      // Solo agregar journal_id si se ha seleccionado una bitácora
+      // Solo agregar shared_journal_id si se ha seleccionado una bitácora
       if (useJournal && selectedJournalId) {
-        (eventData as any).journal_id = selectedJournalId;
+        (eventData as any).shared_journal_id = selectedJournalId;
       }
 
       const newEvent = await eventsService.createEvent(eventData);

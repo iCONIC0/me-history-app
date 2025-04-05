@@ -491,9 +491,9 @@ export default function CreateEventScreen() {
         metadata: type === 'time' ? { time: date.toISOString() } : (Object.keys(metadata).length > 0 ? metadata : undefined),
       };
 
-      // Solo agregar journal_id si se ha seleccionado una bitácora
+      // Solo agregar shared_journal_id si se ha seleccionado una bitácora
       if (useJournal && selectedJournalId) {
-        eventData.journal_id = selectedJournalId;
+        eventData.shared_journal_id = selectedJournalId;
       }
 
       // Agregar archivos según el tipo de evento

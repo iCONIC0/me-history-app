@@ -56,20 +56,44 @@ export default function HomeScreen() {
   };
 
   const renderEventItem = ({ item }: { item: Event }) => {
+    const truncateText = (text: string, maxLength: number) => {
+      if (!text) return '';
+      return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+    };
+    console.log(item);
+
     return (
       <TouchableOpacity 
         style={[styles.eventItem, { backgroundColor: '#e7d3c1' }]}
         onPress={() => router.push(`/event/${item.id}`)}
       >
+        
         <View style={styles.eventInfo}>
           <Text style={[styles.eventTitle, { color: '#202024' }]}>{item.title}</Text>
+          {item.description && (
+            <Text style={[styles.eventDescription, { color: '#202024' }]}>
+              {truncateText(item.description, 100)}
+            </Text>
+          )}
           <Text style={[styles.eventDate, { color: '#202024' }]}>
-            {new Date(item.created_at).toLocaleDateString('es-ES', {
+            {new Date(item.event_date || item.created_at).toLocaleDateString('es-ES', {
               day: 'numeric',
               month: 'long',
-              year: 'numeric'
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
             })}
           </Text>
+          <View style={styles.eventMetadata}>
+            {item.shared_journal && (
+              <View style={styles.eventBadge}>
+                <Ionicons name="book" size={12} color="#e16b5c" />
+                <Text style={[styles.eventBadgeText, { color: '#e16b5c' }]}>
+                  {item.shared_journal.name}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
         <Ionicons name="chevron-forward" size={20} color="#202024" />
       </TouchableOpacity>
@@ -311,6 +335,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     opacity: 0.7,
   },
+  eventType: {
+    fontSize: 12,
+    marginTop: 4,
+    fontStyle: 'italic',
+  },
+  eventDescription: {
+    fontSize: 14,
+    marginBottom: 8,
+    opacity: 0.8,
+  },
   journalItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -373,5 +407,24 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  eventMetadata: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 4,
+  },
+  eventBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF40',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    gap: 4,
+  },
+  eventBadgeText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
 });
