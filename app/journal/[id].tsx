@@ -34,20 +34,20 @@ export default function JournalDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <SafeAreaView style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
+        <ActivityIndicator size="large" color="#e16b5c" />
       </SafeAreaView>
     );
   }
 
   if (error || !journal) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <Text style={[styles.errorText, { color: colors.text }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
+        <Text style={[styles.errorText, { color: '#202024' }]}>
           {error || 'Bitácora no encontrada'}
         </Text>
         <TouchableOpacity
-          style={[styles.retryButton, { backgroundColor: colors.primary }]}
+          style={[styles.retryButton, { backgroundColor: '#e16b5c' }]}
           onPress={loadJournal}
         >
           <Text style={styles.retryButtonText}>Reintentar</Text>
@@ -57,36 +57,36 @@ export default function JournalDetailScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
       <ScrollView>
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => router.back()}
           >
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
+            <Ionicons name="arrow-back" size={24} color="#202024" />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>
+          <Text style={[styles.title, { color: '#202024' }]}>
             {journal.name}
           </Text>
         </View>
 
         <View style={styles.content}>
-          <Text style={[styles.description, { color: colors.text }]}>
+          <Text style={[styles.description, { color: '#202024' }]}>
             {journal.description || 'Sin descripción'}
           </Text>
           
           <View style={styles.infoContainer}>
             <View style={styles.infoItem}>
-              <Ionicons name="people" size={20} color={colors.text} />
-              <Text style={[styles.infoText, { color: colors.text }]}>
+              <Ionicons name="people" size={20} color="#202024" />
+              <Text style={[styles.infoText, { color: '#202024' }]}>
                 {journal.users.length} {journal.users.length === 1 ? 'miembro' : 'miembros'}
               </Text>
             </View>
             
             <View style={styles.infoItem}>
-              <Ionicons name="time" size={20} color={colors.text} />
-              <Text style={[styles.infoText, { color: colors.text }]}>
+              <Ionicons name="time" size={20} color="#202024" />
+              <Text style={[styles.infoText, { color: '#202024' }]}>
                 Última actualización: {new Date(journal.updated_at).toLocaleDateString('es-ES', {
                   day: 'numeric',
                   month: 'long',
@@ -98,43 +98,43 @@ export default function JournalDetailScreen() {
             </View>
 
             <View style={styles.infoItem}>
-              <Ionicons name="person" size={20} color={colors.text} />
-              <Text style={[styles.infoText, { color: colors.text }]}>
+              <Ionicons name="person" size={20} color="#202024" />
+              <Text style={[styles.infoText, { color: '#202024' }]}>
                 Propietario: {journal.owner.name}
               </Text>
             </View>
 
             <View style={styles.infoItem}>
-              <Ionicons name="lock-closed" size={20} color={colors.text} />
-              <Text style={[styles.infoText, { color: colors.text }]}>
+              <Ionicons name="lock-closed" size={20} color="#202024" />
+              <Text style={[styles.infoText, { color: '#202024' }]}>
                 {journal.is_public ? 'Pública' : 'Privada'}
               </Text>
             </View>
 
             <View style={styles.infoItem}>
-              <Ionicons name="key" size={20} color={colors.text} />
-              <Text style={[styles.infoText, { color: colors.text }]}>
+              <Ionicons name="key" size={20} color="#202024" />
+              <Text style={[styles.infoText, { color: '#202024' }]}>
                 Código de invitación: {journal.invitation_code}
               </Text>
             </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            <Text style={[styles.sectionTitle, { color: '#202024' }]}>
               Miembros
             </Text>
             {journal.users.map((user: User) => (
-              <View key={user.id} style={[styles.memberItem, { backgroundColor: colors.card }]}>
+              <View key={user.id} style={[styles.memberItem, { backgroundColor: '#e7d3c1' }]}>
                 <View style={styles.memberInfo}>
-                  <Text style={[styles.memberName, { color: colors.text }]}>
+                  <Text style={[styles.memberName, { color: '#202024' }]}>
                     {user.name}
                   </Text>
-                  <Text style={[styles.memberEmail, { color: colors.text }]}>
+                  <Text style={[styles.memberEmail, { color: '#202024' }]}>
                     {user.email}
                   </Text>
                 </View>
                 {user.pivot && (
-                  <Text style={[styles.memberRole, { color: colors.text }]}>
+                  <Text style={[styles.memberRole, { color: '#202024' }]}>
                     {user.pivot.role}
                   </Text>
                 )}
@@ -144,15 +144,15 @@ export default function JournalDetailScreen() {
 
           {journal.events.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              <Text style={[styles.sectionTitle, { color: '#202024' }]}>
                 Eventos
               </Text>
               {journal.events.map((event: { id: number; title: string; created_at: string }) => (
-                <View key={event.id} style={[styles.eventItem, { backgroundColor: colors.card }]}>
-                  <Text style={[styles.eventTitle, { color: colors.text }]}>
+                <View key={event.id} style={[styles.eventItem, { backgroundColor: '#e7d3c1' }]}>
+                  <Text style={[styles.eventTitle, { color: '#202024' }]}>
                     {event.title}
                   </Text>
-                  <Text style={[styles.eventDate, { color: colors.text }]}>
+                  <Text style={[styles.eventDate, { color: '#202024' }]}>
                     {new Date(event.created_at).toLocaleDateString('es-ES', {
                       day: 'numeric',
                       month: 'long',

@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, TextInput, TextInputProps, StyleSheet, Text } from 'react-native';
+import { View, TextInput, TextInputProps, Text } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { useStyles } from '@/hooks/useStyles';
 
 interface AuthInputProps extends TextInputProps {
   label: string;
@@ -9,44 +10,23 @@ interface AuthInputProps extends TextInputProps {
 
 export const AuthInput: React.FC<AuthInputProps> = ({ label, error, ...props }) => {
   const { colors } = useTheme();
+  const styles = useStyles();
+  const errorColor = '#ff3b30'; // Color de error para inputs
 
   return (
-    <View style={styles.container}>
-      <Text style={[styles.label, { color: colors.text }]}>{label}</Text>
+    <View style={styles.view.authInputContainer}>
+      <Text style={styles.text.label}>{label}</Text>
       <TextInput
         style={[
-          styles.input,
+          styles.input.default,
           {
-            borderColor: error ? colors.error : colors.border,
-            color: colors.text,
+            borderColor: error ? errorColor : colors.border,
           },
         ]}
         placeholderTextColor={colors.text}
         {...props}
       />
-      {error && <Text style={[styles.error, { color: colors.error }]}>{error}</Text>}
+      {error && <Text style={styles.text.error}>{error}</Text>}
     </View>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 16,
-    marginBottom: 8,
-    fontWeight: '500',
-  },
-  input: {
-    height: 48,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    fontSize: 16,
-  },
-  error: {
-    fontSize: 14,
-    marginTop: 4,
-  },
-}); 
+}; 

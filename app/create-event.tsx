@@ -727,41 +727,41 @@ export default function CreateEventScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <Ionicons name="arrow-back" size={24} color="#202024" />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>
+        <Text style={[styles.title, { color: '#202024' }]}>
           Crear Evento
         </Text>
       </View>
 
       <ScrollView style={styles.content}>
         <View style={styles.formGroup}>
-          <Text style={[styles.label, { color: colors.text }]}>Título *</Text>
+          <Text style={[styles.label, { color: '#202024' }]}>Título *</Text>
           <TextInput
-            style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
+            style={[styles.input, { backgroundColor: '#e7d3c1', color: '#202024' }]}
             value={title}
             onChangeText={setTitle}
             placeholder="Título del evento"
-            placeholderTextColor={colors.text + '80'}
+            placeholderTextColor="#20202480"
           />
         </View>
 
         {/* Solo mostrar el campo de descripción si el tipo NO es "texto" */}
         {type !== 'text' && (
           <View style={styles.formGroup}>
-            <Text style={[styles.label, { color: colors.text }]}>Descripción</Text>
+            <Text style={[styles.label, { color: '#202024' }]}>Descripción</Text>
             <TextInput
-              style={[styles.input, styles.textArea, { backgroundColor: colors.card, color: colors.text }]}
+              style={[styles.input, styles.textArea, { backgroundColor: '#e7d3c1', color: '#202024' }]}
               value={description}
               onChangeText={setDescription}
               placeholder="Descripción del evento (opcional)"
-              placeholderTextColor={colors.text + '80'}
+              placeholderTextColor="#20202480"
               multiline
               numberOfLines={4}
             />
@@ -769,74 +769,74 @@ export default function CreateEventScreen() {
         )}
 
         <View style={styles.formGroup}>
-          <Text style={[styles.label, { color: colors.text }]}>Tipo de Evento *</Text>
+          <Text style={[styles.label, { color: '#202024' }]}>Tipo de Evento *</Text>
           <TouchableOpacity
-            style={[styles.selectButton, { backgroundColor: colors.card }]}
+            style={[styles.selectButton, { backgroundColor: '#e7d3c1' }]}
             onPress={() => setShowTypeModal(true)}
           >
-            <Text style={[styles.selectButtonText, { color: colors.text }]}>
+            <Text style={[styles.selectButtonText, { color: '#202024' }]}>
               {getSelectedTypeLabel()}
             </Text>
-            <Ionicons name="chevron-down" size={20} color={colors.text} />
+            <Ionicons name="chevron-down" size={20} color="#202024" />
           </TouchableOpacity>
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={[styles.label, { color: colors.text }]}>Categoría *</Text>
+          <Text style={[styles.label, { color: '#202024' }]}>Categoría *</Text>
           <TouchableOpacity
-            style={[styles.selectButton, { backgroundColor: colors.card }]}
+            style={[styles.selectButton, { backgroundColor: '#e7d3c1' }]}
             onPress={() => setShowCategoryModal(true)}
           >
-            <Text style={[styles.selectButtonText, { color: colors.text }]}>
+            <Text style={[styles.selectButtonText, { color: '#202024' }]}>
               {getSelectedCategoryLabel()}
             </Text>
-            <Ionicons name="chevron-down" size={20} color={colors.text} />
+            <Ionicons name="chevron-down" size={20} color="#202024" />
           </TouchableOpacity>
         </View>
 
         {/* Solo mostrar el campo de fecha y hora si el tipo NO es "tiempo" */}
         {type !== 'time' && (
           <View style={styles.formGroup}>
-            <Text style={[styles.label, { color: colors.text }]}>Fecha y Hora *</Text>
+            <Text style={[styles.label, { color: '#202024' }]}>Fecha y Hora *</Text>
             <TouchableOpacity
-              style={[styles.selectButton, { backgroundColor: colors.card }]}
+              style={[styles.selectButton, { backgroundColor: '#e7d3c1' }]}
               onPress={() => setShowDateModal(true)}
             >
-              <Text style={[styles.selectButtonText, { color: colors.text }]}>
+              <Text style={[styles.selectButtonText, { color: '#202024' }]}>
                 {format(date, "EEEE d 'de' MMMM 'de' yyyy, HH:mm", { locale: es })}
               </Text>
-              <Ionicons name="calendar-outline" size={20} color={colors.text} />
+              <Ionicons name="calendar-outline" size={20} color="#202024" />
             </TouchableOpacity>
           </View>
         )}
 
         <View style={styles.formGroup}>
           <View style={styles.switchContainer}>
-            <Text style={[styles.label, { color: colors.text }]}>Agregar a una bitácora</Text>
+            <Text style={[styles.label, { color: '#202024' }]}>Agregar a una bitácora</Text>
             <Switch
               value={useJournal}
               onValueChange={setUseJournal}
-              trackColor={{ false: '#767577', true: colors.primary + '80' }}
-              thumbColor={useJournal ? colors.primary : '#f4f3f4'}
+              trackColor={{ false: '#e7d3c1', true: '#e16b5c80' }}
+              thumbColor={useJournal ? '#e16b5c' : '#f4f3f4'}
             />
           </View>
         </View>
 
         {useJournal && (
           <View style={styles.formGroup}>
-            <Text style={[styles.label, { color: colors.text }]}>Seleccionar Bitácora</Text>
+            <Text style={[styles.label, { color: '#202024' }]}>Seleccionar Bitácora</Text>
             <View style={styles.journalsContainer}>
               {journals.map((journal) => (
                 <TouchableOpacity
                   key={journal.id}
                   style={[
                     styles.journalButton,
-                    { backgroundColor: colors.card },
-                    selectedJournalId === journal.id && { borderColor: colors.primary, borderWidth: 2 }
+                    { backgroundColor: '#e7d3c1' },
+                    selectedJournalId === journal.id && { borderColor: '#e16b5c', borderWidth: 2 }
                   ]}
                   onPress={() => setSelectedJournalId(journal.id)}
                 >
-                  <Text style={[styles.journalButtonText, { color: colors.text }]}>
+                  <Text style={[styles.journalButtonText, { color: '#202024' }]}>
                     {journal.name}
                   </Text>
                 </TouchableOpacity>
@@ -849,7 +849,7 @@ export default function CreateEventScreen() {
         {renderTypeSpecificFields()}
 
         <TouchableOpacity
-          style={[styles.submitButton, { backgroundColor: colors.primary }]}
+          style={[styles.submitButton, { backgroundColor: '#e16b5c' }]}
           onPress={handleSubmit}
           disabled={isLoading}
         >
@@ -868,11 +868,11 @@ export default function CreateEventScreen() {
           onRequestClose={() => setShowTypeModal(false)}
         >
           <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+            <View style={[styles.modalContent, { backgroundColor: '#f7f5f2' }]}>
               <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>Seleccionar Tipo</Text>
+                <Text style={[styles.modalTitle, { color: '#202024' }]}>Seleccionar Tipo</Text>
                 <TouchableOpacity onPress={() => setShowTypeModal(false)}>
-                  <Ionicons name="close" size={24} color={colors.text} />
+                  <Ionicons name="close" size={24} color="#202024" />
                 </TouchableOpacity>
               </View>
               <ScrollView style={styles.modalOptions}>
@@ -881,8 +881,8 @@ export default function CreateEventScreen() {
                     key={eventType.id}
                     style={[
                       styles.modalOption,
-                      { backgroundColor: colors.card },
-                      type === eventType.id && { borderColor: colors.primary, borderWidth: 2 }
+                      { backgroundColor: '#e7d3c1' },
+                      type === eventType.id && { borderColor: '#e16b5c', borderWidth: 2 }
                     ]}
                     onPress={() => {
                       setType(eventType.id);
@@ -892,12 +892,12 @@ export default function CreateEventScreen() {
                     <Ionicons 
                       name={eventType.icon as any} 
                       size={24} 
-                      color={type === eventType.id ? colors.primary : colors.text} 
+                      color={type === eventType.id ? '#e16b5c' : '#202024'} 
                     />
                     <Text 
                       style={[
                         styles.modalOptionText, 
-                        { color: type === eventType.id ? colors.primary : colors.text }
+                        { color: type === eventType.id ? '#e16b5c' : '#202024' }
                       ]}
                     >
                       {eventType.label}
@@ -917,11 +917,11 @@ export default function CreateEventScreen() {
           onRequestClose={() => setShowCategoryModal(false)}
         >
           <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+            <View style={[styles.modalContent, { backgroundColor: '#f7f5f2' }]}>
               <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>Seleccionar Categoría</Text>
+                <Text style={[styles.modalTitle, { color: '#202024' }]}>Seleccionar Categoría</Text>
                 <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
-                  <Ionicons name="close" size={24} color={colors.text} />
+                  <Ionicons name="close" size={24} color="#202024" />
                 </TouchableOpacity>
               </View>
               <ScrollView style={styles.modalOptions}>
@@ -930,8 +930,8 @@ export default function CreateEventScreen() {
                     key={eventCategory.id}
                     style={[
                       styles.modalOption,
-                      { backgroundColor: colors.card },
-                      category === eventCategory.id && { borderColor: colors.primary, borderWidth: 2 }
+                      { backgroundColor: '#e7d3c1' },
+                      category === eventCategory.id && { borderColor: '#e16b5c', borderWidth: 2 }
                     ]}
                     onPress={() => {
                       setCategory(eventCategory.id);
@@ -941,12 +941,12 @@ export default function CreateEventScreen() {
                     <Ionicons 
                       name={eventCategory.icon as any} 
                       size={24} 
-                      color={category === eventCategory.id ? colors.primary : colors.text} 
+                      color={category === eventCategory.id ? '#e16b5c' : '#202024'} 
                     />
                     <Text 
                       style={[
                         styles.modalOptionText, 
-                        { color: category === eventCategory.id ? colors.primary : colors.text }
+                        { color: category === eventCategory.id ? '#e16b5c' : '#202024' }
                       ]}
                     >
                       {eventCategory.label}
@@ -966,20 +966,20 @@ export default function CreateEventScreen() {
           onRequestClose={handleDatePickerClose}
         >
           <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+            <View style={[styles.modalContent, { backgroundColor: '#f7f5f2' }]}>
               <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>
+                <Text style={[styles.modalTitle, { color: '#202024' }]}>
                   {datePickerStep === 'date' ? 'Seleccionar Fecha' : 'Seleccionar Hora'}
                 </Text>
                 <TouchableOpacity onPress={handleDatePickerClose}>
-                  <Ionicons name="close" size={24} color={colors.text} />
+                  <Ionicons name="close" size={24} color="#202024" />
                 </TouchableOpacity>
               </View>
 
               {datePickerStep === 'date' ? (
                 <View style={styles.datePickerContainer}>
                   <View style={styles.datePickerHeader}>
-                    <Text style={[styles.datePickerTitle, { color: colors.text }]}>
+                    <Text style={[styles.datePickerTitle, { color: '#202024' }]}>
                       {format(date, "MMMM yyyy", { locale: es })}
                     </Text>
                     <View style={styles.datePickerControls}>
@@ -990,7 +990,7 @@ export default function CreateEventScreen() {
                           setDate(newDate);
                         }}
                       >
-                        <Ionicons name="chevron-back" size={24} color={colors.text} />
+                        <Ionicons name="chevron-back" size={24} color="#202024" />
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => {
@@ -999,14 +999,14 @@ export default function CreateEventScreen() {
                           setDate(newDate);
                         }}
                       >
-                        <Ionicons name="chevron-forward" size={24} color={colors.text} />
+                        <Ionicons name="chevron-forward" size={24} color="#202024" />
                       </TouchableOpacity>
                     </View>
                   </View>
 
                   <View style={styles.calendarGrid}>
                     {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map((day) => (
-                      <Text key={day} style={[styles.calendarDayHeader, { color: colors.text }]}>
+                      <Text key={day} style={[styles.calendarDayHeader, { color: '#202024' }]}>
                         {day}
                       </Text>
                     ))}
@@ -1025,8 +1025,8 @@ export default function CreateEventScreen() {
                           key={i}
                           style={[
                             styles.calendarDay,
-                            isSelected && { backgroundColor: colors.primary },
-                            isToday && !isSelected && { borderColor: colors.primary, borderWidth: 1 }
+                            isSelected && { backgroundColor: '#e16b5c' },
+                            isToday && !isSelected && { borderColor: '#e16b5c', borderWidth: 1 }
                           ]}
                           onPress={() => {
                             if (isCurrentMonth) {
@@ -1039,7 +1039,7 @@ export default function CreateEventScreen() {
                           <Text
                             style={[
                               styles.calendarDayText,
-                              { color: isCurrentMonth ? colors.text : colors.text + '40' },
+                              { color: isCurrentMonth ? '#202024' : '#20202440' },
                               isSelected && { color: '#FFFFFF' }
                             ]}
                           >
@@ -1051,7 +1051,7 @@ export default function CreateEventScreen() {
                   </View>
 
                   <TouchableOpacity
-                    style={[styles.nextButton, { backgroundColor: colors.primary }]}
+                    style={[styles.nextButton, { backgroundColor: '#e16b5c' }]}
                     onPress={() => setDatePickerStep('time')}
                   >
                     <Text style={styles.nextButtonText}>Siguiente</Text>
@@ -1061,21 +1061,21 @@ export default function CreateEventScreen() {
                 <View style={styles.timePickerContainer}>
                   <View style={styles.timePickerControls}>
                     <View style={styles.timePickerColumn}>
-                      <Text style={[styles.timePickerLabel, { color: colors.text }]}>Hora</Text>
+                      <Text style={[styles.timePickerLabel, { color: '#202024' }]}>Hora</Text>
                       <ScrollView style={styles.timePickerScroll}>
                         {Array.from({ length: 24 }, (_, i) => (
                           <TouchableOpacity
                             key={i}
                             style={[
                               styles.timePickerOption,
-                              date.getHours() === i && { backgroundColor: colors.primary }
+                              date.getHours() === i && { backgroundColor: '#e16b5c' }
                             ]}
                             onPress={() => handleTimeChange(i, date.getMinutes())}
                           >
                             <Text
                               style={[
                                 styles.timePickerOptionText,
-                                { color: colors.text },
+                                { color: '#202024' },
                                 date.getHours() === i && { color: '#FFFFFF' }
                               ]}
                             >
@@ -1086,21 +1086,21 @@ export default function CreateEventScreen() {
                       </ScrollView>
                     </View>
                     <View style={styles.timePickerColumn}>
-                      <Text style={[styles.timePickerLabel, { color: colors.text }]}>Minutos</Text>
+                      <Text style={[styles.timePickerLabel, { color: '#202024' }]}>Minutos</Text>
                       <ScrollView style={styles.timePickerScroll}>
                         {Array.from({ length: 12 }, (_, i) => (
                           <TouchableOpacity
                             key={i}
                             style={[
                               styles.timePickerOption,
-                              date.getMinutes() === i * 5 && { backgroundColor: colors.primary }
+                              date.getMinutes() === i * 5 && { backgroundColor: '#e16b5c' }
                             ]}
                             onPress={() => handleTimeChange(date.getHours(), i * 5)}
                           >
                             <Text
                               style={[
                                 styles.timePickerOptionText,
-                                { color: colors.text },
+                                { color: '#202024' },
                                 date.getMinutes() === i * 5 && { color: '#FFFFFF' }
                               ]}
                             >
@@ -1114,13 +1114,13 @@ export default function CreateEventScreen() {
 
                   <View style={styles.timePickerActions}>
                     <TouchableOpacity
-                      style={[styles.datePickerBackButton, { backgroundColor: colors.card }]}
+                      style={[styles.datePickerBackButton, { backgroundColor: '#e7d3c1' }]}
                       onPress={() => setDatePickerStep('date')}
                     >
-                      <Text style={[styles.datePickerBackButtonText, { color: colors.text }]}>Atrás</Text>
+                      <Text style={[styles.datePickerBackButtonText, { color: '#202024' }]}>Atrás</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.confirmButton, { backgroundColor: colors.primary }]}
+                      style={[styles.confirmButton, { backgroundColor: '#e16b5c' }]}
                       onPress={handleDatePickerClose}
                     >
                       <Text style={styles.confirmButtonText}>Confirmar</Text>

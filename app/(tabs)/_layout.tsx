@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { useTheme } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { View, StyleSheet, Platform } from 'react-native';
 
 export default function TabLayout() {
   const { colors } = useTheme();
@@ -9,23 +10,32 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerStyle: {
-          backgroundColor: colors.background,
+          backgroundColor: '#f7f5f2',
         },
-        headerTintColor: colors.text,
+        headerTintColor: '#6177c2',
         tabBarStyle: {
-          backgroundColor: colors.background,
-          borderTopColor: colors.border,
+          backgroundColor: '#6177c2',
+          borderTopWidth: 0,
+          height: Platform.OS === 'ios' ? 85 : 60,
+          paddingBottom: Platform.OS === 'ios' ? 25 : 8,
+          paddingTop: 8,
         },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.text,
+        tabBarActiveTintColor: '#FFFFFF',
+        tabBarInactiveTintColor: '#e16b5c',
+        tabBarShowLabel: false,
+        tabBarItemStyle: {
+          height: 44,
+        }
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Inicio',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
+              <Ionicons name="home" size={30} color={color} />
+            </View>
           ),
         }}
       />
@@ -33,8 +43,10 @@ export default function TabLayout() {
         name="suggested-events"
         options={{
           title: 'Eventos Sugeridos',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="flash" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
+              <Ionicons name="flash" size={30} color={color} />
+            </View>
           ),
         }}
       />
@@ -42,8 +54,10 @@ export default function TabLayout() {
         name="shared-journals"
         options={{
           title: 'Bitácoras',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="book" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
+              <Ionicons name="book" size={30} color={color} />
+            </View>
           ),
         }}
       />
@@ -51,11 +65,28 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Perfil',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
+              <Ionicons name="person" size={30} color={color} />
+            </View>
           ),
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  iconContainer: {
+    padding: 6,
+    borderRadius: 12,
+    width: 46,
+    height: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeIconContainer: {
+    backgroundColor: '#e16b5c',
+    borderRadius: 12,
+  },
+});

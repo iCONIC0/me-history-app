@@ -35,20 +35,20 @@ export default function EventDetailScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
+        <ActivityIndicator size="large" color="#e16b5c" />
       </View>
     );
   }
 
   if (error || !event) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
         <Text style={[styles.errorText, { color: '#FF3B30' }]}>
           {error || 'Evento no encontrado'}
         </Text>
         <TouchableOpacity
-          style={[styles.retryButton, { backgroundColor: colors.primary }]}
+          style={[styles.retryButton, { backgroundColor: '#e16b5c' }]}
           onPress={loadEvent}
         >
           <Text style={styles.retryButtonText}>Reintentar</Text>
@@ -58,15 +58,15 @@ export default function EventDetailScreen() {
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <Ionicons name="arrow-back" size={24} color="#202024" />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>
+        <Text style={[styles.title, { color: '#202024' }]}>
           {event.title}
         </Text>
       </View>
@@ -74,8 +74,8 @@ export default function EventDetailScreen() {
       <View style={styles.content}>
         <View style={styles.eventInfo}>
           <View style={styles.infoRow}>
-            <Ionicons name="calendar-outline" size={20} color={colors.primary} />
-            <Text style={[styles.infoText, { color: colors.text }]}>
+            <Ionicons name="calendar-outline" size={20} color="#e16b5c" />
+            <Text style={[styles.infoText, { color: '#202024' }]}>
               {new Date(event.date).toLocaleDateString('es-ES', {
                 weekday: 'long',
                 day: 'numeric',
@@ -89,16 +89,16 @@ export default function EventDetailScreen() {
 
           {event.location && (
             <View style={styles.infoRow}>
-              <Ionicons name="location-outline" size={20} color={colors.primary} />
-              <Text style={[styles.infoText, { color: colors.text }]}>
+              <Ionicons name="location-outline" size={20} color="#e16b5c" />
+              <Text style={[styles.infoText, { color: '#202024' }]}>
                 {event.location}
               </Text>
             </View>
           )}
 
           <View style={styles.infoRow}>
-            <Ionicons name="pricetag-outline" size={20} color={colors.primary} />
-            <Text style={[styles.infoText, { color: colors.text }]}>
+            <Ionicons name="pricetag-outline" size={20} color="#e16b5c" />
+            <Text style={[styles.infoText, { color: '#202024' }]}>
               {event.type} - {event.category}
             </Text>
           </View>
@@ -106,10 +106,10 @@ export default function EventDetailScreen() {
 
         {event.description && (
           <View style={styles.descriptionContainer}>
-            <Text style={[styles.descriptionTitle, { color: colors.text }]}>
+            <Text style={[styles.descriptionTitle, { color: '#202024' }]}>
               Descripción
             </Text>
-            <Text style={[styles.description, { color: colors.text }]}>
+            <Text style={[styles.description, { color: '#202024' }]}>
               {event.description}
             </Text>
           </View>
@@ -117,7 +117,7 @@ export default function EventDetailScreen() {
 
         {event.media && event.media.length > 0 && (
           <View style={styles.mediaContainer}>
-            <Text style={[styles.mediaTitle, { color: colors.text }]}>
+            <Text style={[styles.mediaTitle, { color: '#202024' }]}>
               Multimedia
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>

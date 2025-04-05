@@ -28,24 +28,20 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState('');
 
   const handleRegister = async () => {
-    setError('');
-
-    // Validaciones
     if (!formData.name || !formData.email || !formData.password || !formData.password_confirmation) {
-      setError('Por favor completa todos los campos');
+      Alert.alert('Error', 'Por favor completa todos los campos');
       return;
     }
 
     if (formData.password !== formData.password_confirmation) {
-      setError('Las contraseñas no coinciden');
+      Alert.alert('Error', 'Las contraseñas no coinciden');
       return;
     }
 
     if (formData.password.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres');
+      Alert.alert('Error', 'La contraseña debe tener al menos 8 caracteres');
       return;
     }
 
@@ -56,7 +52,10 @@ export default function RegisterScreen() {
       router.replace('/(tabs)');
     } catch (error: any) {
       console.log(error);
-      setError(error.response?.data?.message || 'Error al registrarse. Por favor intenta de nuevo.');
+      Alert.alert(
+        'Error de registro',
+        error.response?.data?.message || 'No se pudo completar el registro. Por favor intenta de nuevo.'
+      );
     } finally {
       setLoading(false);
     }
@@ -65,28 +64,21 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={[styles.container, { backgroundColor: '#f7f5f2' }]}
     >
       <View style={styles.content}>
-        <Text style={[styles.title, { color: colors.text }]}>Crear cuenta</Text>
-        <Text style={[styles.subtitle, { color: colors.text }]}>
-          Únete a nuestra comunidad
+        <Text style={[styles.title, { color: '#202024' }]}>Crear cuenta</Text>
+        <Text style={[styles.subtitle, { color: '#202024' }]}>
+          Regístrate para comenzar a crear tus recuerdos
         </Text>
 
-        {error ? (
-          <View style={[styles.errorContainer, { backgroundColor: colors.error + '20' }]}>
-            <Ionicons name="alert-circle" size={20} color={colors.error} />
-            <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
-          </View>
-        ) : null}
-
         <View style={styles.form}>
-          <View style={[styles.inputContainer, { borderColor: colors.border }]}>
-            <Ionicons name="person-outline" size={20} color={colors.text} style={styles.inputIcon} />
+          <View style={[styles.inputContainer, { borderColor: '#e7d3c1' }]}>
+            <Ionicons name="person-outline" size={20} color="#202024" style={styles.inputIcon} />
             <TextInput
-              style={[styles.input, { color: colors.text }]}
+              style={[styles.input, { color: '#202024' }]}
               placeholder="Nombre completo"
-              placeholderTextColor={colors.text + '80'}
+              placeholderTextColor="#20202480"
               value={formData.name}
               onChangeText={(text) => setFormData({ ...formData, name: text })}
               autoCapitalize="words"
@@ -94,12 +86,12 @@ export default function RegisterScreen() {
             />
           </View>
 
-          <View style={[styles.inputContainer, { borderColor: colors.border }]}>
-            <Ionicons name="mail-outline" size={20} color={colors.text} style={styles.inputIcon} />
+          <View style={[styles.inputContainer, { borderColor: '#e7d3c1' }]}>
+            <Ionicons name="mail-outline" size={20} color="#202024" style={styles.inputIcon} />
             <TextInput
-              style={[styles.input, { color: colors.text }]}
+              style={[styles.input, { color: '#202024' }]}
               placeholder="Correo electrónico"
-              placeholderTextColor={colors.text + '80'}
+              placeholderTextColor="#20202480"
               value={formData.email}
               onChangeText={(text) => setFormData({ ...formData, email: text })}
               autoCapitalize="none"
@@ -108,12 +100,12 @@ export default function RegisterScreen() {
             />
           </View>
 
-          <View style={[styles.inputContainer, { borderColor: colors.border }]}>
-            <Ionicons name="lock-closed-outline" size={20} color={colors.text} style={styles.inputIcon} />
+          <View style={[styles.inputContainer, { borderColor: '#e7d3c1' }]}>
+            <Ionicons name="lock-closed-outline" size={20} color="#202024" style={styles.inputIcon} />
             <TextInput
-              style={[styles.input, { color: colors.text }]}
+              style={[styles.input, { color: '#202024' }]}
               placeholder="Contraseña"
-              placeholderTextColor={colors.text + '80'}
+              placeholderTextColor="#20202480"
               value={formData.password}
               onChangeText={(text) => setFormData({ ...formData, password: text })}
               secureTextEntry={!showPassword}
@@ -126,17 +118,17 @@ export default function RegisterScreen() {
               <Ionicons
                 name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                 size={20}
-                color={colors.text}
+                color="#202024"
               />
             </TouchableOpacity>
           </View>
 
-          <View style={[styles.inputContainer, { borderColor: colors.border }]}>
-            <Ionicons name="lock-closed-outline" size={20} color={colors.text} style={styles.inputIcon} />
+          <View style={[styles.inputContainer, { borderColor: '#e7d3c1' }]}>
+            <Ionicons name="lock-closed-outline" size={20} color="#202024" style={styles.inputIcon} />
             <TextInput
-              style={[styles.input, { color: colors.text }]}
+              style={[styles.input, { color: '#202024' }]}
               placeholder="Confirmar contraseña"
-              placeholderTextColor={colors.text + '80'}
+              placeholderTextColor="#20202480"
               value={formData.password_confirmation}
               onChangeText={(text) => setFormData({ ...formData, password_confirmation: text })}
               secureTextEntry={!showConfirmPassword}
@@ -149,13 +141,13 @@ export default function RegisterScreen() {
               <Ionicons
                 name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
                 size={20}
-                color={colors.text}
+                color="#202024"
               />
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: colors.primary }]}
+            style={[styles.button, { backgroundColor: '#e16b5c' }]}
             onPress={handleRegister}
             disabled={loading}
           >
@@ -167,12 +159,12 @@ export default function RegisterScreen() {
           </TouchableOpacity>
 
           <View style={styles.loginContainer}>
-            <Text style={[styles.loginText, { color: colors.text }]}>
+            <Text style={[styles.loginText, { color: '#202024' }]}>
               ¿Ya tienes una cuenta?{' '}
             </Text>
             <Link href="/(auth)/login" asChild>
               <TouchableOpacity disabled={loading}>
-                <Text style={[styles.loginLink, { color: colors.primary }]}>
+                <Text style={[styles.loginLink, { color: '#e16b5c' }]}>
                   Inicia sesión
                 </Text>
               </TouchableOpacity>
@@ -204,17 +196,6 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     textAlign: 'center',
     opacity: 0.7,
-  },
-  errorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  errorText: {
-    marginLeft: 8,
-    fontSize: 14,
   },
   form: {
     gap: 16,

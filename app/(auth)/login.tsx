@@ -49,21 +49,21 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={[styles.container, { backgroundColor: '#f7f5f2' }]}
     >
       <View style={styles.content}>
-        <Text style={[styles.title, { color: colors.text }]}>¡Bienvenido de nuevo!</Text>
-        <Text style={[styles.subtitle, { color: colors.text }]}>
+        <Text style={[styles.title, { color: '#202024' }]}>¡Bienvenido de nuevo!</Text>
+        <Text style={[styles.subtitle, { color: '#202024' }]}>
           Inicia sesión para continuar
         </Text>
 
         <View style={styles.form}>
-          <View style={[styles.inputContainer, { borderColor: colors.border }]}>
-            <Ionicons name="mail-outline" size={20} color={colors.text} style={styles.inputIcon} />
+          <View style={[styles.inputContainer, { borderColor: '#e7d3c1' }]}>
+            <Ionicons name="mail-outline" size={20} color="#202024" style={styles.inputIcon} />
             <TextInput
-              style={[styles.input, { color: colors.text }]}
+              style={[styles.input, { color: '#202024' }]}
               placeholder="Correo electrónico"
-              placeholderTextColor={colors.text + '80'}
+              placeholderTextColor="#20202480"
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
@@ -72,12 +72,12 @@ export default function LoginScreen() {
             />
           </View>
 
-          <View style={[styles.inputContainer, { borderColor: colors.border }]}>
-            <Ionicons name="lock-closed-outline" size={20} color={colors.text} style={styles.inputIcon} />
+          <View style={[styles.inputContainer, { borderColor: '#e7d3c1' }]}>
+            <Ionicons name="lock-closed-outline" size={20} color="#202024" style={styles.inputIcon} />
             <TextInput
-              style={[styles.input, { color: colors.text }]}
+              style={[styles.input, { color: '#202024' }]}
               placeholder="Contraseña"
-              placeholderTextColor={colors.text + '80'}
+              placeholderTextColor="#20202480"
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
@@ -90,7 +90,7 @@ export default function LoginScreen() {
               <Ionicons
                 name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                 size={20}
-                color={colors.text}
+                color="#202024"
               />
             </TouchableOpacity>
           </View>
@@ -100,13 +100,13 @@ export default function LoginScreen() {
             onPress={() => router.push('/forgot-password' as any)}
             disabled={loading}
           >
-            <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>
+            <Text style={[styles.forgotPasswordText, { color: '#e16b5c' }]}>
               ¿Olvidaste tu contraseña?
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: colors.primary }]}
+            style={[styles.button, { backgroundColor: '#e16b5c' }]}
             onPress={handleLogin}
             disabled={loading}
           >
@@ -118,12 +118,12 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           <View style={styles.registerContainer}>
-            <Text style={[styles.registerText, { color: colors.text }]}>
+            <Text style={[styles.registerText, { color: '#202024' }]}>
               ¿No tienes una cuenta?{' '}
             </Text>
             <Link href="/(auth)/register" asChild>
               <TouchableOpacity disabled={loading}>
-                <Text style={[styles.registerLink, { color: colors.primary }]}>
+                <Text style={[styles.registerLink, { color: '#e16b5c' }]}>
                   Regístrate
                 </Text>
               </TouchableOpacity>

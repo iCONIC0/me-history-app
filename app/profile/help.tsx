@@ -68,15 +68,15 @@ export default function HelpScreen() {
   ];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.push('/(tabs)/profile')}
         >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <Ionicons name="arrow-back" size={24} color="#202024" />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>
+        <Text style={[styles.title, { color: '#202024' }]}>
           Ayuda y Soporte
         </Text>
       </View>
@@ -85,26 +85,26 @@ export default function HelpScreen() {
         {helpItems.map((item) => (
           <TouchableOpacity
             key={item.id}
-            style={[styles.helpItem, { borderBottomColor: colors.border }]}
+            style={[styles.helpItem, { borderBottomColor: '#e7d3c1' }]}
             onPress={item.action}
           >
             <View style={styles.helpItemContent}>
-              <Ionicons name={item.icon} size={24} color={colors.text} />
+              <Ionicons name={item.icon} size={24} color="#202024" />
               <View style={styles.helpItemInfo}>
-                <Text style={[styles.helpItemTitle, { color: colors.text }]}>
+                <Text style={[styles.helpItemTitle, { color: '#202024' }]}>
                   {item.title}
                 </Text>
-                <Text style={[styles.helpItemDescription, { color: colors.text }]}>
+                <Text style={[styles.helpItemDescription, { color: '#202024' }]}>
                   {item.description}
                 </Text>
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={24} color={colors.text} />
+            <Ionicons name="chevron-forward" size={24} color="#202024" />
           </TouchableOpacity>
         ))}
 
         <View style={styles.versionContainer}>
-          <Text style={[styles.versionText, { color: colors.text }]}>
+          <Text style={[styles.versionText, { color: '#202024' }]}>
             Versión 1.0.0
           </Text>
         </View>

@@ -149,15 +149,15 @@ export default function ProfileScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
+        <ActivityIndicator size="large" color="#e16b5c" />
       </View>
     );
   }
 
   return (
     <KeyboardAvoidingView 
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={[styles.container, { backgroundColor: '#f7f5f2' }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
@@ -172,17 +172,17 @@ export default function ProfileScreen() {
               style={styles.profileImage}
             />
             <TouchableOpacity
-              style={[styles.editImageButton, { backgroundColor: colors.primary }]}
+              style={[styles.editImageButton, { backgroundColor: '#e16b5c' }]}
               onPress={handleImagePick}
             >
               <Ionicons name="camera" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
           
-          <Text style={[styles.name, { color: colors.text }]}>
+          <Text style={[styles.name, { color: '#202024' }]}>
             {profile?.name || 'Usuario'}
           </Text>
-          <Text style={[styles.email, { color: colors.text }]}>
+          <Text style={[styles.email, { color: '#202024' }]}>
             {profile?.email || 'usuario@ejemplo.com'}
           </Text>
         </View>
@@ -190,129 +190,126 @@ export default function ProfileScreen() {
         {isEditing ? (
           <View style={styles.editForm}>
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Nombre</Text>
+              <Text style={[styles.label, { color: '#202024' }]}>Nombre</Text>
               <TextInput
                 style={[styles.input, { 
-                  backgroundColor: colors.card,
-                  color: colors.text,
-                  borderColor: colors.border,
+                  backgroundColor: '#e7d3c1',
+                  color: '#202024',
+                  borderColor: '#e7d3c1',
                 }]}
                 value={formData.name}
                 onChangeText={(text: string) => setFormData(prev => ({ ...prev, name: text }))}
                 placeholder="Tu nombre"
-                placeholderTextColor={colors.text}
+                placeholderTextColor="#20202480"
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Email</Text>
+              <Text style={[styles.label, { color: '#202024' }]}>Email</Text>
               <TextInput
                 style={[styles.input, { 
-                  backgroundColor: colors.card,
-                  color: colors.text,
-                  borderColor: colors.border,
+                  backgroundColor: '#e7d3c1',
+                  color: '#202024',
+                  borderColor: '#e7d3c1',
                 }]}
                 value={formData.email}
                 onChangeText={(text: string) => setFormData(prev => ({ ...prev, email: text }))}
                 placeholder="Tu email"
-                placeholderTextColor={colors.text}
+                placeholderTextColor="#20202480"
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Contraseña actual</Text>
+              <Text style={[styles.label, { color: '#202024' }]}>Contraseña actual</Text>
               <TextInput
                 style={[styles.input, { 
-                  backgroundColor: colors.card,
-                  color: colors.text,
-                  borderColor: colors.border,
+                  backgroundColor: '#e7d3c1',
+                  color: '#202024',
+                  borderColor: '#e7d3c1',
                 }]}
                 value={formData.current_password}
                 onChangeText={(text: string) => setFormData(prev => ({ ...prev, current_password: text }))}
                 placeholder="Tu contraseña actual"
-                placeholderTextColor={colors.text}
+                placeholderTextColor="#20202480"
                 secureTextEntry
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Nueva contraseña</Text>
+              <Text style={[styles.label, { color: '#202024' }]}>Nueva contraseña</Text>
               <TextInput
                 style={[styles.input, { 
-                  backgroundColor: colors.card,
-                  color: colors.text,
-                  borderColor: colors.border,
+                  backgroundColor: '#e7d3c1',
+                  color: '#202024',
+                  borderColor: '#e7d3c1',
                 }]}
                 value={formData.new_password}
                 onChangeText={(text: string) => setFormData(prev => ({ ...prev, new_password: text }))}
                 placeholder="Nueva contraseña"
-                placeholderTextColor={colors.text}
+                placeholderTextColor="#20202480"
                 secureTextEntry
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Confirmar nueva contraseña</Text>
+              <Text style={[styles.label, { color: '#202024' }]}>Confirmar nueva contraseña</Text>
               <TextInput
                 style={[styles.input, { 
-                  backgroundColor: colors.card,
-                  color: colors.text,
-                  borderColor: colors.border,
+                  backgroundColor: '#e7d3c1',
+                  color: '#202024',
+                  borderColor: '#e7d3c1',
                 }]}
                 value={formData.new_password_confirmation}
                 onChangeText={(text: string) => setFormData(prev => ({ ...prev, new_password_confirmation: text }))}
                 placeholder="Confirmar nueva contraseña"
-                placeholderTextColor={colors.text}
+                placeholderTextColor="#20202480"
                 secureTextEntry
               />
             </View>
 
-            <View style={styles.editActions}>
+            <View style={styles.buttonGroup}>
               <TouchableOpacity
-                style={[styles.button, { backgroundColor: colors.primary }]}
+                style={[styles.button, { backgroundColor: '#e16b5c' }]}
                 onPress={handleUpdateProfile}
               >
                 <Text style={styles.buttonText}>Guardar cambios</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.button, { backgroundColor: colors.card }]}
-                onPress={() => {
-                  setIsEditing(false);
-                  loadProfile();
-                }}
+                style={[styles.button, { backgroundColor: '#6177c2' }]}
+                onPress={() => setIsEditing(false)}
               >
-                <Text style={[styles.buttonText, { color: colors.text }]}>Cancelar</Text>
+                <Text style={styles.buttonText}>Cancelar</Text>
               </TouchableOpacity>
             </View>
           </View>
         ) : (
-          <View style={styles.menuContainer}>
+          <View style={styles.menu}>
             {menuItems.map((item, index) => (
               <TouchableOpacity
                 key={index}
-                style={[styles.menuItem, { borderBottomColor: colors.border }]}
+                style={[styles.menuItem, { borderBottomColor: '#e7d3c1' }]}
                 onPress={item.onPress}
               >
                 <View style={styles.menuItemContent}>
-                  <Ionicons name={item.icon as any} size={24} color={colors.text} />
-                  <Text style={[styles.menuItemText, { color: colors.text }]}>
+                  <Ionicons name={item.icon as any} size={24} color="#202024" />
+                  <Text style={[styles.menuItemText, { color: '#202024' }]}>
                     {item.title}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={24} color={colors.text} />
+                <Ionicons name="chevron-forward" size={20} color="#202024" />
               </TouchableOpacity>
             ))}
           </View>
         )}
 
         <TouchableOpacity
-          style={[styles.logoutButton, { backgroundColor: colors.primary }]}
+          style={[styles.logoutButton, { backgroundColor: '#e16b5c' }]}
           onPress={handleLogout}
         >
           <Ionicons name="log-out-outline" size={24} color="#FFFFFF" />
-          <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
+          <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -325,29 +322,30 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    padding: 20,
   },
   header: {
     alignItems: 'center',
-    padding: 20,
+    marginBottom: 32,
   },
   profileImageContainer: {
     position: 'relative',
     marginBottom: 16,
   },
   profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
   },
   editImageButton: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   name: {
     fontSize: 24,
@@ -358,26 +356,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     opacity: 0.7,
   },
-  menuContainer: {
-    padding: 20,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-  },
-  menuItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  menuItemText: {
-    fontSize: 16,
-  },
   editForm: {
-    padding: 20,
+    marginBottom: 32,
   },
   inputGroup: {
     marginBottom: 16,
@@ -392,35 +372,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderWidth: 1,
   },
-  editActions: {
+  buttonGroup: {
     flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'space-between',
     marginTop: 24,
   },
   button: {
     flex: 1,
     height: 48,
     borderRadius: 8,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 8,
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
+  menu: {
+    marginBottom: 32,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  menuItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  menuItemText: {
+    fontSize: 16,
+    marginLeft: 16,
+  },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    margin: 20,
-    padding: 16,
+    height: 48,
     borderRadius: 8,
-    gap: 8,
+    marginTop: 'auto',
   },
   logoutButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+    marginLeft: 8,
   },
 }); 

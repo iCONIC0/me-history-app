@@ -58,12 +58,12 @@ export default function HomeScreen() {
   const renderEventItem = ({ item }: { item: Event }) => {
     return (
       <TouchableOpacity 
-        style={[styles.eventItem, { backgroundColor: colors.card }]}
+        style={[styles.eventItem, { backgroundColor: '#e7d3c1' }]}
         onPress={() => router.push(`/event/${item.id}`)}
       >
         <View style={styles.eventInfo}>
-          <Text style={[styles.eventTitle, { color: colors.text }]}>{item.title}</Text>
-          <Text style={[styles.eventDate, { color: colors.text }]}>
+          <Text style={[styles.eventTitle, { color: '#202024' }]}>{item.title}</Text>
+          <Text style={[styles.eventDate, { color: '#202024' }]}>
             {new Date(item.created_at).toLocaleDateString('es-ES', {
               day: 'numeric',
               month: 'long',
@@ -71,7 +71,7 @@ export default function HomeScreen() {
             })}
           </Text>
         </View>
-        <Ionicons name="chevron-forward" size={20} color={colors.text} />
+        <Ionicons name="chevron-forward" size={20} color="#202024" />
       </TouchableOpacity>
     );
   };
@@ -79,12 +79,12 @@ export default function HomeScreen() {
   const renderJournalItem = ({ item }: { item: Journal }) => {
     return (
       <TouchableOpacity 
-        style={[styles.journalItem, { backgroundColor: colors.card }]}
+        style={[styles.journalItem, { backgroundColor: '#e7d3c1' }]}
         onPress={() => router.push(`/journal/${item.id}`)}
       >
         <View style={styles.journalInfo}>
-          <Text style={[styles.journalTitle, { color: colors.text }]}>{item.name}</Text>
-          <Text style={[styles.journalDate, { color: colors.text }]}>
+          <Text style={[styles.journalTitle, { color: '#202024' }]}>{item.name}</Text>
+          <Text style={[styles.journalDate, { color: '#202024' }]}>
             {new Date(item.updated_at).toLocaleDateString('es-ES', {
               day: 'numeric',
               month: 'long',
@@ -92,25 +92,25 @@ export default function HomeScreen() {
             })}
           </Text>
         </View>
-        <Ionicons name="chevron-forward" size={20} color={colors.text} />
+        <Ionicons name="chevron-forward" size={20} color="#202024" />
       </TouchableOpacity>
     );
   };
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
+        <ActivityIndicator size="large" color="#e16b5c" />
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
         <Text style={[styles.errorText, { color: '#FF3B30' }]}>{error}</Text>
         <TouchableOpacity
-          style={[styles.retryButton, { backgroundColor: colors.primary }]}
+          style={[styles.retryButton, { backgroundColor: '#e16b5c' }]}
           onPress={loadData}
         >
           <Text style={styles.retryButtonText}>Reintentar</Text>
@@ -120,12 +120,12 @@ export default function HomeScreen() {
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
       <View style={styles.header}>
-        <Text style={[styles.greeting, { color: colors.text }]}>
+        <Text style={[styles.greeting, { color: '#202024' }]}>
           ¡Hola, {user?.name || 'Usuario'}!
         </Text>
-        <Text style={[styles.date, { color: colors.text }]}>
+        <Text style={[styles.date, { color: '#202024' }]}>
           {new Date().toLocaleDateString('es-ES', { 
             weekday: 'long', 
             year: 'numeric', 
@@ -137,7 +137,7 @@ export default function HomeScreen() {
 
       <View style={styles.quickActions}>
         <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: colors.primary }]}
+          style={[styles.actionButton, { backgroundColor: '#e16b5c' }]}
           onPress={() => router.push('/suggested-events')}
         >
           <Ionicons name="flash" size={24} color="#FFFFFF" />
@@ -145,7 +145,7 @@ export default function HomeScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: colors.primary }]}
+          style={[styles.actionButton, { backgroundColor: '#e16b5c' }]}
           onPress={() => router.push('/shared-journals')}
         >
           <Ionicons name="book" size={24} color="#FFFFFF" />
@@ -155,7 +155,7 @@ export default function HomeScreen() {
 
       <View style={styles.addEventButtonContainer}>
         <TouchableOpacity
-          style={[styles.addEventButton, { backgroundColor: colors.primary }]}
+          style={[styles.addEventButton, { backgroundColor: '#e16b5c' }]}
           onPress={() => router.push('/create-event')}
         >
           <Ionicons name="add-circle" size={24} color="#FFFFFF" />
@@ -164,7 +164,7 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+        <Text style={[styles.sectionTitle, { color: '#202024' }]}>
           Eventos Recientes
         </Text>
         
@@ -178,18 +178,18 @@ export default function HomeScreen() {
           />
         ) : (
           <View style={styles.emptyState}>
-            <Ionicons name="calendar-outline" size={48} color={colors.text} />
-            <Text style={[styles.emptyStateText, { color: colors.text }]}>
+            <Ionicons name="calendar-outline" size={48} color="#202024" />
+            <Text style={[styles.emptyStateText, { color: '#202024' }]}>
               No hay eventos recientes
             </Text>
-            <Text style={[styles.emptyStateSubtext, { color: colors.text }]}>
+            <Text style={[styles.emptyStateSubtext, { color: '#202024' }]}>
               Registra un evento para comenzar
             </Text>
           </View>
         )}
         
         <TouchableOpacity
-          style={[styles.viewAllButton, { backgroundColor: colors.primary }]}
+          style={[styles.viewAllButton, { backgroundColor: '#e16b5c' }]}
           onPress={() => router.push('/events')}
         >
           <Text style={styles.viewAllButtonText}>Ver todos los eventos</Text>
@@ -197,7 +197,7 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+        <Text style={[styles.sectionTitle, { color: '#202024' }]}>
           Mis Bitácoras
         </Text>
         
@@ -211,18 +211,18 @@ export default function HomeScreen() {
           />
         ) : (
           <View style={styles.emptyState}>
-            <Ionicons name="book-outline" size={48} color={colors.text} />
-            <Text style={[styles.emptyStateText, { color: colors.text }]}>
+            <Ionicons name="book-outline" size={48} color="#202024" />
+            <Text style={[styles.emptyStateText, { color: '#202024' }]}>
               No tienes bitácoras
             </Text>
-            <Text style={[styles.emptyStateSubtext, { color: colors.text }]}>
+            <Text style={[styles.emptyStateSubtext, { color: '#202024' }]}>
               Crea una bitácora para comenzar
             </Text>
           </View>
         )}
         
         <TouchableOpacity
-          style={[styles.viewAllButton, { backgroundColor: colors.primary }]}
+          style={[styles.viewAllButton, { backgroundColor: '#e16b5c' }]}
           onPress={() => router.push('/shared-journals')}
         >
           <Text style={styles.viewAllButtonText}>Ver todas las bitácoras</Text>
@@ -250,55 +250,47 @@ const styles = StyleSheet.create({
   },
   quickActions: {
     flexDirection: 'row',
-    padding: 20,
-    gap: 12,
+    justifyContent: 'space-around',
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
   actionButton: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    borderRadius: 8,
-    gap: 8,
+    padding: 12,
+    borderRadius: 12,
+    width: '45%',
   },
   actionButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    marginLeft: 8,
+    fontSize: 14,
     fontWeight: '600',
   },
   addEventButtonContainer: {
-    padding: 20,
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
   addEventButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    borderRadius: 8,
-    gap: 8,
+    padding: 12,
+    borderRadius: 12,
   },
   addEventButtonText: {
     color: '#FFFFFF',
+    marginLeft: 8,
     fontSize: 16,
     fontWeight: '600',
   },
   section: {
     padding: 20,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  seeAll: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 16,
   },
   eventItem: {
     flexDirection: 'row',
@@ -312,7 +304,7 @@ const styles = StyleSheet.create({
   },
   eventTitle: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     marginBottom: 4,
   },
   eventDate: {
@@ -331,7 +323,7 @@ const styles = StyleSheet.create({
   },
   journalTitle: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     marginBottom: 4,
   },
   journalDate: {
@@ -343,12 +335,11 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 40,
+    padding: 20,
   },
   emptyStateText: {
     fontSize: 18,
-    fontWeight: '500',
+    fontWeight: '600',
     marginTop: 16,
     marginBottom: 8,
   },
@@ -359,14 +350,14 @@ const styles = StyleSheet.create({
   },
   viewAllButton: {
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
     marginTop: 16,
   },
   viewAllButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   errorText: {
     fontSize: 16,
@@ -375,12 +366,12 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
   },
   retryButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
   },
 });

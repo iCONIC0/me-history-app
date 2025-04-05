@@ -96,7 +96,7 @@ export default function EditProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -108,9 +108,9 @@ export default function EditProfileScreen() {
                 style={styles.backButton}
                 onPress={() => router.push('/(tabs)/profile')}
               >
-                <Ionicons name="arrow-back" size={24} color={colors.text} />
+                <Ionicons name="arrow-back" size={24} color="#202024" />
               </TouchableOpacity>
-              <Text style={[styles.title, { color: colors.text }]}>
+              <Text style={[styles.title, { color: '#202024' }]}>
                 Editar Perfil
               </Text>
             </View>
@@ -127,7 +127,7 @@ export default function EditProfileScreen() {
                   style={styles.avatar}
                 />
                 <TouchableOpacity
-                  style={[styles.changeAvatarButton, { backgroundColor: colors.primary }]}
+                  style={[styles.changeAvatarButton, { backgroundColor: '#e16b5c' }]}
                   onPress={handlePickImage}
                 >
                   <Ionicons name="camera" size={20} color="#FFFFFF" />
@@ -136,42 +136,42 @@ export default function EditProfileScreen() {
 
               <View style={styles.form}>
                 <View style={styles.inputContainer}>
-                  <Text style={[styles.label, { color: colors.text }]}>Nombre</Text>
+                  <Text style={[styles.label, { color: '#202024' }]}>Nombre</Text>
                   <TextInput
                     style={[styles.input, { 
-                      backgroundColor: colors.card,
-                      color: colors.text,
-                      borderColor: colors.border,
+                      backgroundColor: '#e7d3c1',
+                      color: '#202024',
+                      borderColor: '#e16b5c',
                     }]}
                     value={name}
                     onChangeText={setName}
                     placeholder="Tu nombre"
-                    placeholderTextColor={colors.text + '80'}
+                    placeholderTextColor="#20202480"
                   />
                 </View>
 
                 <View style={styles.inputContainer}>
-                  <Text style={[styles.label, { color: colors.text }]}>Email</Text>
+                  <Text style={[styles.label, { color: '#202024' }]}>Email</Text>
                   <TextInput
                     style={[styles.input, { 
-                      backgroundColor: colors.card,
-                      color: colors.text,
-                      borderColor: colors.border,
+                      backgroundColor: '#e7d3c1',
+                      color: '#202024',
+                      borderColor: '#e16b5c',
                     }]}
                     value={email}
                     onChangeText={setEmail}
                     placeholder="tu@email.com"
-                    placeholderTextColor={colors.text + '80'}
+                    placeholderTextColor="#20202480"
                     keyboardType="email-address"
                     autoCapitalize="none"
                   />
                 </View>
 
                 <TouchableOpacity
-                  style={[styles.passwordButton, { borderColor: colors.border }]}
+                  style={[styles.passwordButton, { borderColor: '#e16b5c' }]}
                   onPress={() => setShowPasswordFields(!showPasswordFields)}
                 >
-                  <Text style={[styles.passwordButtonText, { color: colors.text }]}>
+                  <Text style={[styles.passwordButtonText, { color: '#202024' }]}>
                     {showPasswordFields ? 'Ocultar cambio de contraseña' : 'Cambiar contraseña'}
                   </Text>
                 </TouchableOpacity>
@@ -179,49 +179,49 @@ export default function EditProfileScreen() {
                 {showPasswordFields && (
                   <>
                     <View style={styles.inputContainer}>
-                      <Text style={[styles.label, { color: colors.text }]}>Contraseña actual</Text>
+                      <Text style={[styles.label, { color: '#202024' }]}>Contraseña actual</Text>
                       <TextInput
                         style={[styles.input, { 
-                          backgroundColor: colors.card,
-                          color: colors.text,
-                          borderColor: colors.border,
+                          backgroundColor: '#e7d3c1',
+                          color: '#202024',
+                          borderColor: '#e16b5c',
                         }]}
                         value={passwordData.current_password}
                         onChangeText={(text) => setPasswordData(prev => ({ ...prev, current_password: text }))}
                         placeholder="Tu contraseña actual"
-                        placeholderTextColor={colors.text + '80'}
+                        placeholderTextColor="#20202480"
                         secureTextEntry
                       />
                     </View>
 
                     <View style={styles.inputContainer}>
-                      <Text style={[styles.label, { color: colors.text }]}>Nueva contraseña</Text>
+                      <Text style={[styles.label, { color: '#202024' }]}>Nueva contraseña</Text>
                       <TextInput
                         style={[styles.input, { 
-                          backgroundColor: colors.card,
-                          color: colors.text,
-                          borderColor: colors.border,
+                          backgroundColor: '#e7d3c1',
+                          color: '#202024',
+                          borderColor: '#e16b5c',
                         }]}
                         value={passwordData.new_password}
                         onChangeText={(text) => setPasswordData(prev => ({ ...prev, new_password: text }))}
                         placeholder="Nueva contraseña"
-                        placeholderTextColor={colors.text + '80'}
+                        placeholderTextColor="#20202480"
                         secureTextEntry
                       />
                     </View>
 
                     <View style={styles.inputContainer}>
-                      <Text style={[styles.label, { color: colors.text }]}>Confirmar nueva contraseña</Text>
+                      <Text style={[styles.label, { color: '#202024' }]}>Confirmar nueva contraseña</Text>
                       <TextInput
                         style={[styles.input, { 
-                          backgroundColor: colors.card,
-                          color: colors.text,
-                          borderColor: colors.border,
+                          backgroundColor: '#e7d3c1',
+                          color: '#202024',
+                          borderColor: '#e16b5c',
                         }]}
                         value={passwordData.new_password_confirmation}
                         onChangeText={(text) => setPasswordData(prev => ({ ...prev, new_password_confirmation: text }))}
                         placeholder="Confirmar nueva contraseña"
-                        placeholderTextColor={colors.text + '80'}
+                        placeholderTextColor="#20202480"
                         secureTextEntry
                       />
                     </View>
@@ -230,7 +230,7 @@ export default function EditProfileScreen() {
               </View>
 
               <TouchableOpacity
-                style={[styles.saveButton, { backgroundColor: colors.primary }]}
+                style={[styles.saveButton, { backgroundColor: '#e16b5c' }]}
                 onPress={handleSave}
                 disabled={isLoading}
               >

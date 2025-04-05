@@ -70,15 +70,15 @@ export default function PrivacyScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.push('/(tabs)/profile')}
         >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <Ionicons name="arrow-back" size={24} color="#202024" />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>
+        <Text style={[styles.title, { color: '#202024' }]}>
           Privacidad
         </Text>
       </View>
@@ -87,31 +87,31 @@ export default function PrivacyScreen() {
         {settings.map((setting) => (
           <View
             key={setting.id}
-            style={[styles.settingItem, { borderBottomColor: colors.border }]}
+            style={[styles.settingItem, { borderBottomColor: '#e7d3c1' }]}
           >
             <View style={styles.settingInfo}>
-              <Text style={[styles.settingTitle, { color: colors.text }]}>
+              <Text style={[styles.settingTitle, { color: '#202024' }]}>
                 {setting.title}
               </Text>
-              <Text style={[styles.settingDescription, { color: colors.text }]}>
+              <Text style={[styles.settingDescription, { color: '#202024' }]}>
                 {setting.description}
               </Text>
             </View>
             <Switch
               value={setting.enabled}
               onValueChange={() => handleToggle(setting.id)}
-              trackColor={{ false: colors.border, true: colors.primary }}
+              trackColor={{ false: '#e7d3c1', true: '#e16b5c' }}
               thumbColor="#FFFFFF"
             />
           </View>
         ))}
 
         <TouchableOpacity
-          style={[styles.deleteButton, { borderColor: colors.error }]}
+          style={[styles.deleteButton, { borderColor: '#FF3B30' }]}
           onPress={handleDeleteAccount}
         >
-          <Ionicons name="trash-outline" size={24} color={colors.error} />
-          <Text style={[styles.deleteButtonText, { color: colors.error }]}>
+          <Ionicons name="trash-outline" size={24} color="#FF3B30" />
+          <Text style={[styles.deleteButtonText, { color: '#FF3B30' }]}>
             Eliminar Cuenta
           </Text>
         </TouchableOpacity>

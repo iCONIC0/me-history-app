@@ -116,13 +116,13 @@ export default function SharedJournalsScreen() {
     const memberCount = item?.users?.length;
     return (
       <TouchableOpacity
-        style={[styles.journalItem, { backgroundColor: colors.card }]}
+        style={[styles.journalItem, { backgroundColor: '#e7d3c1' }]}
         onPress={() => router.push(`/journal/${item.id}`)}
       >
         <View style={styles.journalHeader}>
           <View style={styles.journalTitleContainer}>
-            <Ionicons name="book-outline" size={24} color={colors.primary} />
-            <Text style={[styles.journalTitle, { color: colors.text }]}>{item.name}</Text>
+            <Ionicons name="book-outline" size={24} color="#e16b5c" />
+            <Text style={[styles.journalTitle, { color: '#202024' }]}>{item.name}</Text>
           </View>
           {isOwner && (
             <TouchableOpacity
@@ -135,19 +135,19 @@ export default function SharedJournalsScreen() {
         </View>
 
         {item.description ? (
-          <Text style={[styles.journalDescription, { color: colors.text }]}>
+          <Text style={[styles.journalDescription, { color: '#202024' }]}>
             {item.description}
           </Text>
         ) : null}
 
         <View style={styles.journalFooter}>
           <View style={styles.memberCount}>
-            <Ionicons name="people-outline" size={16} color={colors.text} />
-            <Text style={[styles.memberCountText, { color: colors.text }]}>
+            <Ionicons name="people-outline" size={16} color="#202024" />
+            <Text style={[styles.memberCountText, { color: '#202024' }]}>
               {memberCount} {memberCount === 1 ? 'miembro' : 'miembros'}
             </Text>
           </View>
-          <Text style={[styles.lastUpdate, { color: colors.text }]}>
+          <Text style={[styles.lastUpdate, { color: '#202024' }]}>
             Actualizado: {new Date(item.updated_at).toLocaleDateString()}
           </Text>
         </View>
@@ -157,18 +157,18 @@ export default function SharedJournalsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <SafeAreaView style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
+        <ActivityIndicator size="large" color="#e16b5c" />
       </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
         <Text style={[styles.errorText, { color: '#FF3B30' }]}>{error}</Text>
         <TouchableOpacity
-          style={[styles.retryButton, { backgroundColor: colors.primary }]}
+          style={[styles.retryButton, { backgroundColor: '#e16b5c' }]}
           onPress={loadJournals}
         >
           <Text style={styles.retryButtonText}>Reintentar</Text>
@@ -178,17 +178,17 @@ export default function SharedJournalsScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>Bitácoras Compartidas</Text>
-        <Text style={[styles.subtitle, { color: colors.text }]}>
+        <Text style={[styles.title, { color: '#202024' }]}>Bitácoras Compartidas</Text>
+        <Text style={[styles.subtitle, { color: '#202024' }]}>
           Colabora y comparte momentos con otros
         </Text>
       </View>
 
       <View style={styles.actionButtons}>
         <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: colors.primary }]}
+          style={[styles.actionButton, { backgroundColor: '#e16b5c' }]}
           onPress={() => setIsCreateModalVisible(true)}
         >
           <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
@@ -196,7 +196,7 @@ export default function SharedJournalsScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: colors.primary }]}
+          style={[styles.actionButton, { backgroundColor: '#e16b5c' }]}
           onPress={() => setIsJoinModalVisible(true)}
         >
           <Ionicons name="enter-outline" size={20} color="#FFFFFF" />
@@ -231,29 +231,29 @@ export default function SharedJournalsScreen() {
         onRequestClose={() => setIsCreateModalVisible(false)}
       >
         <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Crear Nueva Bitácora</Text>
+          <View style={[styles.modalContent, { backgroundColor: '#f7f5f2' }]}>
+            <Text style={[styles.modalTitle, { color: '#202024' }]}>Crear Nueva Bitácora</Text>
             
             <TextInput
               style={[styles.input, { 
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.card
+                borderColor: '#e7d3c1',
+                color: '#202024',
+                backgroundColor: '#e7d3c1'
               }]}
               placeholder="Título de la bitácora"
-              placeholderTextColor={colors.text + '80'}
+              placeholderTextColor="#20202480"
               value={newJournalTitle}
               onChangeText={setNewJournalTitle}
             />
             
             <TextInput
               style={[styles.input, styles.textArea, { 
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.card
+                borderColor: '#e7d3c1',
+                color: '#202024',
+                backgroundColor: '#e7d3c1'
               }]}
               placeholder="Descripción (opcional)"
-              placeholderTextColor={colors.text + '80'}
+              placeholderTextColor="#20202480"
               value={newJournalDescription}
               onChangeText={setNewJournalDescription}
               multiline
@@ -262,14 +262,14 @@ export default function SharedJournalsScreen() {
             
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { borderColor: colors.border }]}
+                style={[styles.modalButton, styles.cancelButton, { borderColor: '#e7d3c1' }]}
                 onPress={() => setIsCreateModalVisible(false)}
               >
-                <Text style={[styles.modalButtonText, { color: colors.text }]}>Cancelar</Text>
+                <Text style={[styles.modalButtonText, { color: '#202024' }]}>Cancelar</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton, { backgroundColor: colors.primary }]}
+                style={[styles.modalButton, styles.confirmButton, { backgroundColor: '#e16b5c' }]}
                 onPress={handleCreateJournal}
               >
                 <Text style={styles.confirmButtonText}>Crear</Text>
@@ -287,31 +287,31 @@ export default function SharedJournalsScreen() {
         onRequestClose={() => setIsJoinModalVisible(false)}
       >
         <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Unirse a una Bitácora</Text>
+          <View style={[styles.modalContent, { backgroundColor: '#f7f5f2' }]}>
+            <Text style={[styles.modalTitle, { color: '#202024' }]}>Unirse a una Bitácora</Text>
             
             <TextInput
               style={[styles.input, { 
-                borderColor: colors.border,
-                color: colors.text,
-                backgroundColor: colors.card
+                borderColor: '#e7d3c1',
+                color: '#202024',
+                backgroundColor: '#e7d3c1'
               }]}
               placeholder="Código de invitación"
-              placeholderTextColor={colors.text + '80'}
+              placeholderTextColor="#20202480"
               value={joinCode}
               onChangeText={setJoinCode}
             />
             
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { borderColor: colors.border }]}
+                style={[styles.modalButton, styles.cancelButton, { borderColor: '#e7d3c1' }]}
                 onPress={() => setIsJoinModalVisible(false)}
               >
-                <Text style={[styles.modalButtonText, { color: colors.text }]}>Cancelar</Text>
+                <Text style={[styles.modalButtonText, { color: '#202024' }]}>Cancelar</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton, { backgroundColor: colors.primary }]}
+                style={[styles.modalButton, styles.confirmButton, { backgroundColor: '#e16b5c' }]}
                 onPress={handleJoinJournal}
               >
                 <Text style={styles.confirmButtonText}>Unirse</Text>
