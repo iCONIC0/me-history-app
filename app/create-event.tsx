@@ -65,9 +65,7 @@ const EVENT_TYPE_FIELDS = {
     { id: 'content', label: 'Contenido', type: 'textarea', required: true },
     { id: 'media_urls', label: 'URLs de medios (separadas por comas)', type: 'textarea', required: false },
   ],
-  time: [
-    { id: 'time', label: 'Hora', type: 'time', required: true },
-  ],
+  time: [], // Removemos el campo time ya que usamos date directamente
 };
 
 export default function CreateEventScreen() {
@@ -470,13 +468,15 @@ export default function CreateEventScreen() {
       return;
     }
 
-    // Validar campos requeridos del tipo de evento
-    const requiredFields = EVENT_TYPE_FIELDS[type as keyof typeof EVENT_TYPE_FIELDS]?.filter(field => field.required) || [];
-    const missingFields = requiredFields.filter(field => !metadata[field.id]);
-    
-    if (missingFields.length > 0) {
-      Alert.alert('Error', `Por favor completa los campos requeridos: ${missingFields.map(f => f.label).join(', ')}`);
-      return;
+    // Validar campos requeridos del tipo de evento solo si no es de tipo tiempo
+    if (type !== 'time') {
+      const requiredFields = EVENT_TYPE_FIELDS[type as keyof typeof EVENT_TYPE_FIELDS]?.filter(field => field.required) || [];
+      const missingFields = requiredFields.filter(field => !metadata[field.id]);
+      
+      if (missingFields.length > 0) {
+        Alert.alert('Error', `Por favor completa los campos requeridos: ${missingFields.map(f => f.label).join(', ')}`);
+        return;
+      }
     }
 
     try {
@@ -488,7 +488,7 @@ export default function CreateEventScreen() {
         type,
         category,
         event_date: date.toISOString(),
-        metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+        metadata: type === 'time' ? { time: date.toISOString() } : (Object.keys(metadata).length > 0 ? metadata : undefined),
       };
 
       // Solo agregar journal_id si se ha seleccionado una bitácora

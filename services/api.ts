@@ -2,7 +2,7 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { useAuth } from '../hooks/useAuth';
 
-const API_URL = 'http://192.168.4.94:8787';
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://192.168.4.94:8787';
 // Crear instancia de axios con configuración base
 const api = axios.create({
   baseURL: API_URL,
