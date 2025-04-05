@@ -1,6 +1,7 @@
 import api from './api';
 
 export interface Event {
+  shared_journal: any;
   id: number;
   title: string;
   description: string | null;
