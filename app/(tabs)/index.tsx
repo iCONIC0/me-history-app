@@ -24,26 +24,22 @@ export default function HomeScreen() {
       setIsLoading(true);
       setError(null);
       
-      const [events, journals] = await Promise.all([
-        eventsService.getEvents(),
+      const [eventsResponse, journals] = await Promise.all([
+        eventsService.getEvents(1, 3), // Obtener solo los 5 eventos más recientes
         journalsService.getJournals(),
       ]);
             
-      // Asegurarnos de que events y journals son arrays
-      if (!Array.isArray(events) || !Array.isArray(journals)) {
+      // Asegurarnos de que journals es un array
+      if (!Array.isArray(journals)) {
         throw new Error('Formato de respuesta inválido');
       }
       
       // Ordenar por fecha de creación (más reciente primero)
-      const sortedEvents = [...events].sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-      
       const sortedJournals = [...journals].sort((a, b) => 
         new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
       );
       
-      setRecentEvents(sortedEvents.slice(0, 5));
+      setRecentEvents(eventsResponse.data);
       setRecentJournals(sortedJournals.slice(0, 3));
     } catch (err) {
       console.error('Error al cargar datos:', err);
@@ -192,7 +188,7 @@ export default function HomeScreen() {
           Eventos Recientes
         </Text>
         
-        {recentEvents.length > 0 ? (
+        {recentEvents?.length > 0 ? (
           <FlatList
             data={recentEvents}
             renderItem={renderEventItem}

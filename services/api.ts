@@ -7,8 +7,8 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://192.168.4.94:8787';
 const api = axios.create({
   baseURL: API_URL,
   headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    'content-type': 'application/json',
+    'accept': 'application/json',
   },
   timeout: 10000, // 10 segundos de timeout
 });
@@ -20,6 +20,13 @@ api.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // // Si es una solicitud con FormData, no establecer Content-Type
+    // // para que axios lo establezca automáticamente con el boundary correcto
+    if (config.data instanceof FormData) {
+      delete config.headers['content-type'];
+    }
+    
     return config;
   },
   (error) => {

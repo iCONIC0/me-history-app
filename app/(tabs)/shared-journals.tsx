@@ -17,6 +17,7 @@ import { journalsService, Journal } from '../../services/journals';
 import { useAuth } from '../../hooks/useAuth';
 import api from '../../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Clipboard from 'expo-clipboard';
 
 export default function SharedJournalsScreen() {
   const { colors } = useTheme();
@@ -114,6 +115,18 @@ export default function SharedJournalsScreen() {
   const renderJournalItem = ({ item }: { item: Journal }) => {
     const isOwner = item.owner_id === user?.id;
     const memberCount = item?.users?.length;
+    const isAdmin = item?.users?.some(u => u.id === user?.id && u.pivot?.role === 'admin');
+    
+    const copyInvitationCode = async () => {
+      try {
+        await Clipboard.setStringAsync(item.invitation_code);
+        Alert.alert('Éxito', 'Código de invitación copiado al portapapeles');
+      } catch (error) {
+        console.error('Error al copiar código:', error);
+        Alert.alert('Error', 'No se pudo copiar el código de invitación');
+      }
+    };
+
     return (
       <TouchableOpacity
         style={[styles.journalItem, { backgroundColor: '#e7d3c1' }]}
@@ -133,6 +146,18 @@ export default function SharedJournalsScreen() {
             </TouchableOpacity>
           )}
         </View>
+        
+        {(isOwner || isAdmin) && (
+          <TouchableOpacity 
+            style={styles.invitationCodeContainer}
+            onPress={copyInvitationCode}
+          >
+            <Ionicons name="copy-outline" size={16} color="#6177c2" />
+            <Text style={[styles.invitationCode, { color: '#6177c2' }]}>
+              Código: {item.invitation_code}
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {item.description ? (
           <Text style={[styles.journalDescription, { color: '#202024' }]}>
@@ -141,15 +166,17 @@ export default function SharedJournalsScreen() {
         ) : null}
 
         <View style={styles.journalFooter}>
-          <View style={styles.memberCount}>
-            <Ionicons name="people-outline" size={16} color="#202024" />
-            <Text style={[styles.memberCountText, { color: '#202024' }]}>
-              {memberCount} {memberCount === 1 ? 'miembro' : 'miembros'}
+          <View style={styles.journalInfo}>
+            <View style={styles.memberCount}>
+              <Ionicons name="people-outline" size={16} color="#202024" />
+              <Text style={[styles.memberCountText, { color: '#202024' }]}>
+                {memberCount} {memberCount === 1 ? 'miembro' : 'miembros'}
+              </Text>
+            </View>
+            <Text style={[styles.lastUpdate, { color: '#202024' }]}>
+              Actualizado: {new Date(item.updated_at).toLocaleDateString()}
             </Text>
           </View>
-          <Text style={[styles.lastUpdate, { color: '#202024' }]}>
-            Actualizado: {new Date(item.updated_at).toLocaleDateString()}
-          </Text>
         </View>
       </TouchableOpacity>
     );
@@ -500,5 +527,22 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  invitationCodeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+    backgroundColor: '#FFFFFF40',
+  },
+  invitationCode: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  journalInfo: {
+    flexDirection: 'column',
+    gap: 4,
   },
 }); 

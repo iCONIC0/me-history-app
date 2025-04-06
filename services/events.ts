@@ -1,19 +1,29 @@
 import api from './api';
 
 export interface Event {
-  shared_journal: any;
   id: number;
   title: string;
   description: string | null;
   type: string;
   category: string;
-  date: string;
+  event_date: string;
   location: string | null;
-  journal_id: number;
+  shared_journal_id: number | null;
+  shared_journal: {
+    id: number;
+    name: string;
+  } | null;
   user_id: number;
+  user: {
+    id: number;
+    name: string;
+  } | null;
+  visibility: 'all' | 'custom';
+  include_in_personal_journal: boolean;
   created_at: string;
   updated_at: string;
   media: EventMedia[];
+  metadata: Record<string, any>;
 }
 
 export interface EventMedia {
@@ -35,7 +45,11 @@ export interface CreateEventData {
   event_date: string;
   location?: string;
   shared_journal_id?: number;
-  media?: File[];
+  media?: {
+    uri: string;
+    name: string;
+    type: string;
+  }[];
   metadata?: Record<string, any>;
 }
 
@@ -65,15 +79,32 @@ export interface SuggestedEventsResponse {
   predefined: SuggestedEvent[];
 }
 
+export interface EventsResponse {
+  data: Event[];
+  pagination: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+}
+
+// Interfaz para archivos de medios
+export interface MediaFile {
+  uri: string;
+  name: string;
+  type: string;
+}
+
 export const eventsService = {
-  // Obtener todos los eventos
-  getEvents: async (): Promise<Event[]> => {
+  // Obtener todos los eventos con paginación
+  getEvents: async (page: number = 1, per_page: number = 10): Promise<EventsResponse> => {
     try {
-      const response = await api.get<ApiResponse<Event[]>>('/api/events');
-      return response.data.data || [];
+      const response :any = await api.get<ApiResponse<EventsResponse>>(`/api/events?page=${page}&limit=${per_page}`);
+      return response.data || { data: [], pagination: { current_page: 1, last_page: 1, per_page: 10, total: 0 } };
     } catch (error) {
       console.error('Error al obtener eventos:', error);
-      return [];
+      return { data: [], pagination: { current_page: 1, last_page: 1, per_page: 10, total: 0 } };
     }
   },
 
@@ -115,21 +146,32 @@ export const eventsService = {
           formData.append('shared_journal_id', data.shared_journal_id.toString());
         }
         
-        // Agregar archivos
-        data.media?.forEach((file: File) => {
-          formData.append('media[]', file);
+        // Agregar archivos - Laravel espera 'media[]' para un array de archivos
+        data.media?.forEach((file: { uri: string; name: string; type: string }) => {
+          // Crear un objeto File a partir de la URI
+          const fileObj = {
+            uri: file.uri,
+            name: file.name,
+            type: file.type
+          };
+          
+          // Agregar el archivo al FormData
+          formData.append('media[]', fileObj as any);
         });
         
         // Agregar metadata si existe
         if (data.metadata) {
-          formData.append('metadata', JSON.stringify(data.metadata));
+          for (const [key, value] of Object.entries(data.metadata)) {
+            formData.append(`metadata[${key}]`, value);
+          }
         }
         
         requestData = formData;
-        headers['Content-Type'] = 'multipart/form-data';
+        headers['content-type'] = 'multipart/form-data';
       } else {
         // Si no hay archivos, enviar como JSON
-        const jsonData = {
+        headers['content-type'] = 'application/json';
+        requestData = {
           title: data.title,
           type: data.type,
           category: data.category,
@@ -137,9 +179,6 @@ export const eventsService = {
           shared_journal_id: data.shared_journal_id,
           metadata: data.metadata || {},
         };
-        
-        requestData = jsonData;
-        headers['Content-Type'] = 'application/json';
       }
       
       const response = await api.post<ApiResponse<Event>>('/api/events', requestData, {
@@ -147,8 +186,6 @@ export const eventsService = {
         validateStatus: (status) => status === 200 || status === 201,
       });
       
-      console.log("response");
-      console.log(response);
       return response.data.data;
     } catch (error) {
       console.error('Error al crear evento:', error);

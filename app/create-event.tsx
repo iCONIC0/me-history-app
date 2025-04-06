@@ -12,6 +12,10 @@ import {
   Modal,
   Image,
   Platform,
+  ViewStyle,
+  TextStyle,
+  ImageStyle,
+  Linking,
 } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,8 +27,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import * as ImagePicker from 'expo-image-picker';
 import { Audio } from 'expo-av';
-import { Camera } from 'expo-camera';
-import { Video } from 'expo-av';
+import { Video, ResizeMode } from 'expo-av';
 
 // Tipos de eventos disponibles
 const EVENT_TYPES = [
@@ -90,25 +93,296 @@ export default function CreateEventScreen() {
   const [audioUri, setAudioUri] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [audioPosition, setAudioPosition] = useState(0);
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [isVideoRecording, setIsVideoRecording] = useState(false);
   const [videoDuration, setVideoDuration] = useState(0);
   const [showCamera, setShowCamera] = useState(false);
-  const [cameraType, setCameraType] = useState<'photo' | 'video'>('photo');
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const cameraRef = useRef<any>(null);
   
   // Referencias
   const audioRecording = useRef<Audio.Recording | null>(null);
-  const videoRecording = useRef<Camera | null>(null);
+  const audioPlayer = useRef<Audio.Sound | null>(null);
   const recordingTimer = useRef<NodeJS.Timeout | null>(null);
+  const playbackTimer = useRef<NodeJS.Timeout | null>(null);
 
-  const dynamicStyles = StyleSheet.create({
-    timePickerContainer: {
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    backButton: {
+      marginRight: 16,
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: colors.text,
+    },
+    content: {
+      flex: 1,
       padding: 20,
     },
-    timePickerTitle: {
+    formGroup: {
+      marginBottom: 20,
+    },
+    label: {
+      fontSize: 16,
+      fontWeight: '500',
+      marginBottom: 8,
+      color: colors.text,
+    },
+    input: {
+      borderRadius: 8,
+      padding: 12,
+      fontSize: 16,
+      backgroundColor: colors.card,
+      color: colors.text,
+    },
+    textArea: {
+      height: 100,
+      textAlignVertical: 'top',
+    },
+    mediaContainer: {
+      marginTop: 20,
+    },
+    mediaOptions: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+    },
+    mediaOption: {
+      padding: 16,
+      borderRadius: 8,
+      alignItems: 'center',
+      width: '45%',
+      backgroundColor: colors.card,
+    },
+    mediaOptionText: {
+      marginTop: 8,
+      fontSize: 14,
+      color: colors.text,
+    },
+    mediaPreview: {
+      position: 'relative',
+      alignItems: 'center',
+    },
+    imagePreview: {
+      width: '100%',
+      height: 200,
+      borderRadius: 8,
+    },
+    audioPreview: {
+      width: '100%',
+      height: 100,
+      borderRadius: 8,
+      justifyContent: 'center',
+      alignItems: 'center',
+      flexDirection: 'row',
+    },
+    audioPlayerContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      width: '100%',
+      padding: 8,
+    },
+    audioPlayButton: {
+      marginRight: 12,
+    },
+    audioControls: {
+      flex: 1,
+    },
+    audioTimeText: {
+      fontSize: 12,
+      marginBottom: 4,
+    },
+    audioProgressContainer: {
+      height: 4,
+      backgroundColor: '#d0c0b0',
+      borderRadius: 2,
+      marginBottom: 4,
+    },
+    audioProgress: {
+      height: '100%',
+      backgroundColor: '#e16b5c',
+      borderRadius: 2,
+    },
+    audioSeekButtons: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    audioSeekButton: {
+      padding: 4,
+    },
+    videoPreview: {
+      width: '100%',
+      height: 200,
+      borderRadius: 8,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    videoPreviewText: {
+      marginLeft: 8,
+      fontSize: 16,
+    },
+    removeMediaButton: {
+      position: 'absolute',
+      top: -10,
+      right: -10,
+      backgroundColor: colors.card,
+      borderRadius: 12,
+    },
+    recordingInfo: {
+      marginTop: 8,
+      fontSize: 12,
+      fontStyle: 'italic',
+    },
+    submitButton: {
+      padding: 16,
+      borderRadius: 8,
+      alignItems: 'center',
+      marginTop: 20,
+      marginBottom: 40,
+    },
+    submitButtonText: {
+      color: '#FFFFFF',
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    journalButton: {
+      backgroundColor: '#34C759',
+      padding: 15,
+      borderRadius: 10,
+      alignItems: 'center',
+      marginTop: 10,
+    },
+    journalButtonText: {
+      color: 'white',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    selectButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: '#E5E5E5',
+    },
+    selectButtonText: {
+      fontSize: 16,
+    },
+    switchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    journalsContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 10,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'flex-end',
+    },
+    modalContent: {
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      padding: 20,
+      maxHeight: '80%',
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 20,
+    },
+    modalTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+    },
+    modalOptions: {
+      maxHeight: '80%',
+    },
+    modalOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+      borderRadius: 8,
+      marginBottom: 8,
+      borderWidth: 1,
+      borderColor: 'transparent',
+    },
+    modalOptionText: {
+      fontSize: 16,
+      marginLeft: 12,
+    },
+    datePickerContainer: {
+      padding: 20,
+    },
+    datePickerHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    datePickerTitle: {
       fontSize: 18,
       fontWeight: 'bold',
-      marginBottom: 16,
+    },
+    datePickerControls: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 16,
+    },
+    calendarGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+    },
+    calendarDayHeader: {
+      width: '14.28%',
+      textAlign: 'center',
+      fontSize: 14,
+      fontWeight: '500',
+      marginBottom: 8,
+    },
+    calendarDay: {
+      width: '14.28%',
+      aspectRatio: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 8,
+      borderRadius: 8,
+    },
+    calendarDayText: {
+      fontSize: 16,
+    },
+    nextButton: {
+      padding: 16,
+      borderRadius: 8,
+      alignItems: 'center',
+      marginTop: 20,
+    },
+    nextButtonText: {
+      color: '#FFFFFF',
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    timePickerContainer: {
+      padding: 20,
     },
     timePickerControls: {
       flexDirection: 'row',
@@ -163,16 +437,35 @@ export default function CreateEventScreen() {
       fontSize: 16,
       fontWeight: '600',
     },
-    nextButton: {
-      padding: 16,
-      borderRadius: 8,
-      alignItems: 'center',
-      marginTop: 20,
+    cameraContainer: {
+      flex: 1,
     },
-    nextButtonText: {
-      color: '#FFFFFF',
+    camera: {
+      flex: 1,
+    },
+    cameraControls: {
+      flex: 1,
+      backgroundColor: 'transparent',
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      alignItems: 'flex-end',
+      paddingBottom: 20,
+    },
+    cameraButton: {
+      position: 'absolute',
+      top: 40,
+      left: 20,
+      zIndex: 10,
+    },
+    cameraPermissionContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.background,
+    },
+    cameraPermissionText: {
       fontSize: 16,
-      fontWeight: '600',
+      color: colors.text,
     },
   });
 
@@ -233,13 +526,8 @@ export default function CreateEventScreen() {
   // Solicitar permisos al cargar el componente
   useEffect(() => {
     (async () => {
-      const { status: cameraStatus } = await Camera.requestCameraPermissionsAsync();
-      const { status: audioStatus } = await Audio.requestPermissionsAsync();
-      const { status: imagePickerStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (cameraStatus !== 'granted' || audioStatus !== 'granted' || imagePickerStatus !== 'granted') {
-        Alert.alert('Permisos necesarios', 'Se requieren permisos para acceder a la cámara, micrófono y galería');
-      }
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      setHasPermission(status === 'granted');
     })();
   }, []);
 
@@ -249,6 +537,12 @@ export default function CreateEventScreen() {
       if (recordingTimer.current) {
         clearInterval(recordingTimer.current);
       }
+      if (playbackTimer.current) {
+        clearInterval(playbackTimer.current);
+      }
+      if (audioPlayer.current) {
+        audioPlayer.current.unloadAsync();
+      }
     };
   }, []);
 
@@ -256,7 +550,7 @@ export default function CreateEventScreen() {
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [4, 3],
         quality: 1,
@@ -284,20 +578,24 @@ export default function CreateEventScreen() {
   // Función para tomar foto con la cámara
   const takePhoto = async () => {
     try {
-      if (videoRecording.current) {
-        const photo = await videoRecording.current.takePictureAsync();
-        setImageUri(photo.uri);
-        // Crear un objeto File a partir de la URI
-        const response = await fetch(photo.uri);
-        const blob = await response.blob();
-        const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
-        
-        // Actualizar metadata con la imagen
+      if (!hasPermission) {
+        Alert.alert('Permiso denegado', 'Se requiere permiso para acceder a la cámara');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        setImageUri(result.assets[0].uri);
+        // Actualizar metadata con la URL de la imagen
         setMetadata(prev => ({
           ...prev,
-          image_url: photo.uri,
+          image_url: result.assets[0].uri
         }));
-        
         setShowCamera(false);
       }
     } catch (error) {
@@ -309,9 +607,28 @@ export default function CreateEventScreen() {
   // Función para iniciar grabación de audio
   const startAudioRecording = async () => {
     try {
+      if (Platform.OS === 'ios') {
+        const { status } = await Audio.requestPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert(
+            'Permiso denegado',
+            'Se requiere permiso para acceder al micrófono para grabar audio.',
+            [
+              { text: 'Cancelar', style: 'cancel' },
+              { 
+                text: 'Configuración', 
+                onPress: () => Linking.openSettings() 
+              }
+            ]
+          );
+          return;
+        }
+      }
+      
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
       });
       
       const { recording } = await Audio.Recording.createAsync(
@@ -322,7 +639,6 @@ export default function CreateEventScreen() {
       setIsRecording(true);
       setRecordingDuration(0);
       
-      // Iniciar temporizador para limitar la duración a 1 minuto
       recordingTimer.current = setInterval(() => {
         setRecordingDuration(prev => {
           if (prev >= 60) {
@@ -334,7 +650,7 @@ export default function CreateEventScreen() {
       }, 1000);
     } catch (error) {
       console.error('Error al iniciar grabación de audio:', error);
-      Alert.alert('Error', 'No se pudo iniciar la grabación de audio');
+      Alert.alert('Error', 'No se pudo iniciar la grabación de audio. Por favor, intenta de nuevo.');
     }
   };
 
@@ -356,13 +672,16 @@ export default function CreateEventScreen() {
         // Crear un objeto File a partir de la URI
         const response = await fetch(uri);
         const blob = await response.blob();
-        const file = new File([blob], 'audio.m4a', { type: 'audio/m4a' });
+        const file = new File([blob], 'audio.wav', { type: 'audio/wav' });
         
         // Actualizar metadata con el audio
         setMetadata(prev => ({
           ...prev,
           audio_url: uri,
         }));
+        
+        // Cargar el audio para reproducirlo
+        await loadAudioForPlayback(uri);
       }
       
       audioRecording.current = null;
@@ -373,41 +692,119 @@ export default function CreateEventScreen() {
     }
   };
 
+  // Función para cargar el audio para reproducción
+  const loadAudioForPlayback = async (uri: string) => {
+    try {
+      // Detener cualquier reproducción en curso
+      if (audioPlayer.current) {
+        await audioPlayer.current.unloadAsync();
+        audioPlayer.current = null;
+      }
+      
+      // Cargar el nuevo audio
+      const { sound } = await Audio.Sound.createAsync(
+        { uri },
+        { shouldPlay: false },
+        onPlaybackStatusUpdate
+      );
+      
+      audioPlayer.current = sound;
+      setIsPlayingAudio(false);
+      setAudioPosition(0);
+    } catch (error) {
+      console.error('Error al cargar audio para reproducción:', error);
+    }
+  };
+
+  // Función para actualizar el estado de reproducción
+  const onPlaybackStatusUpdate = (status: any) => {
+    if (status.isLoaded) {
+      setAudioDuration(status.durationMillis / 1000);
+      setAudioPosition(status.positionMillis / 1000);
+      
+      if (status.didJustFinish) {
+        setIsPlayingAudio(false);
+        if (playbackTimer.current) {
+          clearInterval(playbackTimer.current);
+          playbackTimer.current = null;
+        }
+      }
+    }
+  };
+
+  // Función para reproducir/pausar audio
+  const toggleAudioPlayback = async () => {
+    if (!audioPlayer.current) return;
+    
+    if (isPlayingAudio) {
+      await audioPlayer.current.pauseAsync();
+      if (playbackTimer.current) {
+        clearInterval(playbackTimer.current);
+        playbackTimer.current = null;
+      }
+    } else {
+      await audioPlayer.current.playAsync();
+      // Iniciar temporizador para actualizar la posición
+      playbackTimer.current = setInterval(() => {
+        audioPlayer.current?.getStatusAsync().then(status => {
+          if (status.isLoaded) {
+            setAudioPosition(status.positionMillis / 1000);
+          }
+        });
+      }, 100);
+    }
+    
+    setIsPlayingAudio(!isPlayingAudio);
+  };
+
+  // Función para cambiar la posición del audio
+  const seekAudio = async (position: number) => {
+    if (!audioPlayer.current) return;
+    
+    await audioPlayer.current.setPositionAsync(position * 1000);
+    setAudioPosition(position);
+  };
+
+  // Función para formatear tiempo en segundos a formato mm:ss
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  // Función para eliminar el audio grabado
+  const removeAudio = () => {
+    if (audioPlayer.current) {
+      audioPlayer.current.unloadAsync();
+      audioPlayer.current = null;
+    }
+    setAudioUri(null);
+    setIsPlayingAudio(false);
+    setAudioPosition(0);
+    setAudioDuration(0);
+    
+    // Eliminar de metadata
+    const newMetadata = { ...metadata };
+    delete newMetadata.audio_url;
+    setMetadata(newMetadata);
+  };
+
   // Función para iniciar grabación de video
   const startVideoRecording = async () => {
     try {
-      if (videoRecording.current) {
-        setIsVideoRecording(true);
-        setVideoDuration(0);
-        
-        // Iniciar temporizador para limitar la duración a 1 minuto
-        recordingTimer.current = setInterval(() => {
-          setVideoDuration(prev => {
-            if (prev >= 60) {
-              stopVideoRecording();
-              return 60;
-            }
-            return prev + 1;
-          });
-        }, 1000);
-        
-        const video = await videoRecording.current.recordAsync({
-          maxDuration: 60,
-        });
-        
-        setVideoUri(video.uri);
-        // Crear un objeto File a partir de la URI
-        const response = await fetch(video.uri);
-        const blob = await response.blob();
-        const file = new File([blob], 'video.mp4', { type: 'video/mp4' });
-        
-        // Actualizar metadata con el video
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+        allowsEditing: true,
+        quality: 1,
+        videoMaxDuration: 60,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setVideoUri(result.assets[0].uri);
         setMetadata(prev => ({
           ...prev,
-          video_url: video.uri,
+          video_url: result.assets[0].uri
         }));
-        
-        setIsVideoRecording(false);
         setShowCamera(false);
       }
     } catch (error) {
@@ -423,11 +820,7 @@ export default function CreateEventScreen() {
         clearInterval(recordingTimer.current);
         recordingTimer.current = null;
       }
-      
-      if (videoRecording.current) {
-        await videoRecording.current.stopRecording();
-        setIsVideoRecording(false);
-      }
+      setIsVideoRecording(false);
     } catch (error) {
       console.error('Error al detener grabación de video:', error);
       Alert.alert('Error', 'No se pudo detener la grabación de video');
@@ -438,7 +831,7 @@ export default function CreateEventScreen() {
   const pickVideo = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+        mediaTypes: ['videos'],
         allowsEditing: true,
         quality: 1,
       });
@@ -488,8 +881,15 @@ export default function CreateEventScreen() {
         type,
         category,
         event_date: date.toISOString(),
-        metadata: type === 'time' ? { time: date.toISOString() } : (Object.keys(metadata).length > 0 ? metadata : undefined),
+        // No enviar metadata para tipos de medios
       };
+      if (!['video', 'image', 'audio'].includes(type)) {
+        if(type === 'time'){
+          eventData.event_date = date.toISOString();
+        }else{
+          eventData.metadata = { time: date.toISOString() };
+        }
+      }
 
       // Solo agregar shared_journal_id si se ha seleccionado una bitácora
       if (useJournal && selectedJournalId) {
@@ -498,23 +898,59 @@ export default function CreateEventScreen() {
 
       // Agregar archivos según el tipo de evento
       if (type === 'image' && imageUri) {
+        // Crear el objeto de archivo con la estructura correcta
+        const filename = imageUri.split('/').pop() ?? 'image.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const fileType = match ? `image/${match[1]}` : 'image/jpeg';
+        
+        // Convertir la URI a un objeto File
         const response = await fetch(imageUri);
         const blob = await response.blob();
-        const file = new File([blob], 'image.jpg', { type: 'image/jpeg' });
-        eventData.media = [file];
+        
+        // Asegurarse de que el tipo MIME sea correcto para imágenes
+        const imageBlob = new Blob([blob], { type: fileType });
+        const file = new File([imageBlob], filename, { type: fileType });
+        
+        eventData.media = [{
+          uri: imageUri,
+          name: filename,
+          type: fileType
+        }];
       } else if (type === 'audio' && audioUri) {
+        // Crear el objeto de archivo con la estructura correcta
+        const filename = audioUri.split('/').pop() ?? 'audio.wav';
+        const match = /\.(\w+)$/.exec(filename);
+        const fileType = match ? `audio/${match[1]}` : 'audio/wav';
+        
+        // Convertir la URI a un objeto File
         const response = await fetch(audioUri);
         const blob = await response.blob();
-        const file = new File([blob], 'audio.m4a', { type: 'audio/m4a' });
-        eventData.media = [file];
+        const file = new File([blob], filename, { type: fileType });
+        
+        eventData.media = [{
+          uri: audioUri,
+          name: filename,
+          type: fileType
+        }];
       } else if (type === 'video' && videoUri) {
+        // Crear el objeto de archivo con la estructura correcta
+        const filename = videoUri.split('/').pop() ?? 'video.mp4';
+        const match = /\.(\w+)$/.exec(filename);
+        const fileType = match ? `video/${match[1]}` : 'video/mp4';
+        
+        // Convertir la URI a un objeto File
         const response = await fetch(videoUri);
         const blob = await response.blob();
-        const file = new File([blob], 'video.mp4', { type: 'video/mp4' });
-        eventData.media = [file];
+        const file = new File([blob], filename, { type: fileType });
+        
+        eventData.media = [{
+          uri: videoUri,
+          name: filename,
+          type: fileType
+        }];
       }
 
-      console.log(eventData);
+      console.log('Enviando datos:', eventData);
       const newEvent = await eventsService.createEvent(eventData);
       
       if (!newEvent) {
@@ -576,13 +1012,10 @@ export default function CreateEventScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.mediaOption, { backgroundColor: colors.card }]}
-                  onPress={() => {
-                    setCameraType('photo');
-                    setShowCamera(true);
-                  }}
+                  onPress={takePhoto}
                 >
                   <Ionicons name="camera" size={24} color={colors.text} />
-                  <Text style={[styles.mediaOptionText, { color: colors.text }]}>Cámara</Text>
+                  <Text style={[styles.mediaOptionText, { color: colors.text }]}>Tomar Foto</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -594,17 +1027,58 @@ export default function CreateEventScreen() {
     if (type === 'audio') {
       return (
         <View style={styles.formGroup}>
-          <Text style={[styles.label, { color: colors.text }]}>Audio *</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Audio (WAV) *</Text>
           <View style={styles.mediaContainer}>
             {audioUri ? (
               <View style={styles.mediaPreview}>
                 <View style={[styles.audioPreview, { backgroundColor: colors.card }]}>
-                  <Ionicons name="musical-note" size={24} color={colors.text} />
-                  <Text style={[styles.audioPreviewText, { color: colors.text }]}>Audio grabado</Text>
+                  <View style={styles.audioPlayerContainer}>
+                    <TouchableOpacity
+                      style={styles.audioPlayButton}
+                      onPress={toggleAudioPlayback}
+                    >
+                      <Ionicons 
+                        name={isPlayingAudio ? "pause-circle" : "play-circle"} 
+                        size={32} 
+                        color={colors.text} 
+                      />
+                    </TouchableOpacity>
+                    
+                    <View style={styles.audioControls}>
+                      <Text style={[styles.audioTimeText, { color: colors.text }]}>
+                        {formatTime(audioPosition)} / {formatTime(audioDuration)}
+                      </Text>
+                      
+                      <View style={styles.audioProgressContainer}>
+                        <View 
+                          style={[
+                            styles.audioProgress, 
+                            { width: `${(audioPosition / audioDuration) * 100}%` }
+                          ]} 
+                        />
+                      </View>
+                      
+                      <View style={styles.audioSeekButtons}>
+                        <TouchableOpacity 
+                          style={styles.audioSeekButton}
+                          onPress={() => seekAudio(Math.max(0, audioPosition - 10))}
+                        >
+                          <Ionicons name="play-back" size={20} color={colors.text} />
+                        </TouchableOpacity>
+                        
+                        <TouchableOpacity 
+                          style={styles.audioSeekButton}
+                          onPress={() => seekAudio(Math.min(audioDuration, audioPosition + 10))}
+                        >
+                          <Ionicons name="play-forward" size={20} color={colors.text} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
                 </View>
                 <TouchableOpacity
                   style={styles.removeMediaButton}
-                  onPress={() => setAudioUri(null)}
+                  onPress={removeAudio}
                 >
                   <Ionicons name="close-circle" size={24} color="red" />
                 </TouchableOpacity>
@@ -617,7 +1091,7 @@ export default function CreateEventScreen() {
                 >
                   <Ionicons name={isRecording ? "stop-circle" : "mic"} size={24} color={isRecording ? "red" : colors.text} />
                   <Text style={[styles.mediaOptionText, { color: colors.text }]}>
-                    {isRecording ? `Grabando (${recordingDuration}s)` : 'Grabar Audio'}
+                    {isRecording ? `Grabando (${recordingDuration}s)` : 'Grabar Audio WAV'}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -640,12 +1114,23 @@ export default function CreateEventScreen() {
             {videoUri ? (
               <View style={styles.mediaPreview}>
                 <View style={[styles.videoPreview, { backgroundColor: colors.card }]}>
-                  <Ionicons name="videocam" size={24} color={colors.text} />
-                  <Text style={[styles.videoPreviewText, { color: colors.text }]}>Video grabado</Text>
+                  <Video
+                    source={{ uri: videoUri }}
+                    style={styles.videoPreview}
+                    resizeMode={ResizeMode.CONTAIN}
+                    useNativeControls
+                  />
                 </View>
                 <TouchableOpacity
                   style={styles.removeMediaButton}
-                  onPress={() => setVideoUri(null)}
+                  onPress={() => {
+                    setVideoUri(null);
+                    setMetadata(prev => {
+                      const newMetadata = { ...prev };
+                      delete newMetadata.video_url;
+                      return newMetadata;
+                    });
+                  }}
                 >
                   <Ionicons name="close-circle" size={24} color="red" />
                 </TouchableOpacity>
@@ -661,22 +1146,14 @@ export default function CreateEventScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.mediaOption, { backgroundColor: colors.card }]}
-                  onPress={() => {
-                    setCameraType('video');
-                    setShowCamera(true);
-                  }}
+                  onPress={startVideoRecording}
                 >
-                  <Ionicons name="videocam" size={24} color={colors.text} />
+                  <Ionicons name="camera" size={24} color={colors.text} />
                   <Text style={[styles.mediaOptionText, { color: colors.text }]}>Grabar</Text>
                 </TouchableOpacity>
               </View>
             )}
           </View>
-          {isVideoRecording && (
-            <Text style={[styles.recordingInfo, { color: colors.text }]}>
-              Grabando... ({videoDuration}s)
-            </Text>
-          )}
         </View>
       );
     }
@@ -1131,426 +1608,7 @@ export default function CreateEventScreen() {
             </View>
           </View>
         </Modal>
-
-        {/* Modal de cámara */}
-        {showCamera && (
-          <Modal
-            visible={showCamera}
-            transparent={false}
-            animationType="slide"
-            onRequestClose={() => setShowCamera(false)}
-          >
-            <View style={styles.cameraContainer}>
-              <Camera
-                ref={videoRecording}
-                style={styles.camera}
-                type={Camera.Constants.Type.back}
-              >
-                <View style={styles.cameraControls}>
-                  <TouchableOpacity
-                    style={styles.closeButton}
-                    onPress={() => setShowCamera(false)}
-                  >
-                    <Ionicons name="close" size={24} color="white" />
-                  </TouchableOpacity>
-                  
-                  {cameraType === 'photo' ? (
-                    <TouchableOpacity
-                      style={styles.captureButton}
-                      onPress={takePhoto}
-                    >
-                      <Ionicons name="camera" size={32} color="white" />
-                    </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity
-                      style={styles.captureButton}
-                      onPress={isVideoRecording ? stopVideoRecording : startVideoRecording}
-                    >
-                      <Ionicons
-                        name={isVideoRecording ? "stop-circle" : "videocam"}
-                        size={32}
-                        color={isVideoRecording ? "red" : "white"}
-                      />
-                    </TouchableOpacity>
-                  )}
-                  
-                  {isVideoRecording && (
-                    <Text style={styles.recordingText}>
-                      Grabando... ({videoDuration}s)
-                    </Text>
-                  )}
-                </View>
-              </Camera>
-            </View>
-          </Modal>
-        )}
       </ScrollView>
     </SafeAreaView>
   );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
-  },
-  backButton: {
-    marginRight: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
-  formGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  input: {
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  },
-  textArea: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  optionsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  optionButton: {
-    width: '30%',
-    aspectRatio: 1,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  optionText: {
-    fontSize: 12,
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  dateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 12,
-    borderRadius: 8,
-  },
-  dateText: {
-    fontSize: 16,
-  },
-  switchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  journalsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  journalButton: {
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  journalButtonText: {
-    fontSize: 14,
-  },
-  submitButton: {
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 40,
-  },
-  submitButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  selectButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-  },
-  selectButtonText: {
-    fontSize: 16,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  modalOptions: {
-    maxHeight: '80%',
-  },
-  modalOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  modalOptionText: {
-    fontSize: 16,
-    marginLeft: 12,
-  },
-  datePickerContainer: {
-    padding: 20,
-  },
-  datePickerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  datePickerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  calendarGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  calendarDayHeader: {
-    width: '14.28%',
-    textAlign: 'center',
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  calendarDay: {
-    width: '14.28%',
-    aspectRatio: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-    borderRadius: 8,
-  },
-  calendarDayText: {
-    fontSize: 16,
-  },
-  metadataField: {
-    marginBottom: 16,
-  },
-  metadataLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  datePickerControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  timePickerContainer: {
-    padding: 20,
-  },
-  timePickerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  timePickerControls: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  timePickerColumn: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  timePickerLabel: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
-  timePickerScroll: {
-    height: 200,
-  },
-  timePickerOption: {
-    padding: 12,
-    borderRadius: 8,
-    marginVertical: 4,
-    width: '100%',
-    alignItems: 'center',
-  },
-  timePickerOptionText: {
-    fontSize: 16,
-  },
-  timePickerActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-  },
-  datePickerBackButton: {
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    flex: 1,
-    marginRight: 10,
-  },
-  datePickerBackButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  confirmButton: {
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    flex: 1,
-    marginLeft: 10,
-  },
-  confirmButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  nextButton: {
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  nextButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  mediaContainer: {
-    marginTop: 8,
-  },
-  mediaOptions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  mediaOption: {
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    width: '45%',
-  },
-  mediaOptionText: {
-    marginTop: 8,
-    fontSize: 14,
-  },
-  mediaPreview: {
-    position: 'relative',
-    alignItems: 'center',
-  },
-  imagePreview: {
-    width: '100%',
-    height: 200,
-    borderRadius: 8,
-  },
-  audioPreview: {
-    width: '100%',
-    height: 100,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-  audioPreviewText: {
-    marginLeft: 8,
-    fontSize: 16,
-  },
-  videoPreview: {
-    width: '100%',
-    height: 100,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-  videoPreviewText: {
-    marginLeft: 8,
-    fontSize: 16,
-  },
-  removeMediaButton: {
-    position: 'absolute',
-    top: -10,
-    right: -10,
-    backgroundColor: 'white',
-    borderRadius: 12,
-  },
-  recordingInfo: {
-    marginTop: 8,
-    fontSize: 12,
-    fontStyle: 'italic',
-  },
-  cameraContainer: {
-    flex: 1,
-  },
-  camera: {
-    flex: 1,
-  },
-  cameraControls: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'flex-end',
-    paddingBottom: 20,
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 40,
-    left: 20,
-    zIndex: 10,
-  },
-  captureButton: {
-    alignSelf: 'flex-end',
-    marginBottom: 20,
-  },
-  recordingText: {
-    color: 'white',
-    position: 'absolute',
-    top: 40,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    padding: 8,
-    borderRadius: 4,
-  },
-}); 
+} 

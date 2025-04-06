@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { journalsService } from '../../services/journals';
 import { Ionicons } from '@expo/vector-icons';
 import type { Journal, User } from '../../services/journals';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Clipboard from 'expo-clipboard';
 
 export default function JournalDetailScreen() {
   const { colors } = useTheme();
@@ -77,45 +78,66 @@ export default function JournalDetailScreen() {
           </Text>
           
           <View style={styles.infoContainer}>
-            <View style={styles.infoItem}>
-              <Ionicons name="people" size={20} color="#202024" />
-              <Text style={[styles.infoText, { color: '#202024' }]}>
-                {journal.users.length} {journal.users.length === 1 ? 'miembro' : 'miembros'}
-              </Text>
-            </View>
-            
-            <View style={styles.infoItem}>
-              <Ionicons name="time" size={20} color="#202024" />
-              <Text style={[styles.infoText, { color: '#202024' }]}>
-                Última actualización: {new Date(journal.updated_at).toLocaleDateString('es-ES', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </Text>
-            </View>
-
-            <View style={styles.infoItem}>
-              <Ionicons name="person" size={20} color="#202024" />
-              <Text style={[styles.infoText, { color: '#202024' }]}>
-                Propietario: {journal.owner.name}
-              </Text>
+            <View style={styles.infoRow}>
+              <View style={styles.infoItem}>
+                <Ionicons name="people" size={20} color="#202024" />
+                <Text style={[styles.infoText, { color: '#202024' }]}>
+                  {journal.users.length} {journal.users.length === 1 ? 'miembro' : 'miembros'}
+                </Text>
+              </View>
+              
+              <View style={styles.infoItem}>
+                <Ionicons name="time" size={20} color="#202024" />
+                <Text style={[styles.infoText, { color: '#202024' }]}>
+                  Última actualización: {new Date(journal.updated_at).toLocaleDateString('es-ES', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </Text>
+              </View>
             </View>
 
-            <View style={styles.infoItem}>
-              <Ionicons name="lock-closed" size={20} color="#202024" />
-              <Text style={[styles.infoText, { color: '#202024' }]}>
-                {journal.is_public ? 'Pública' : 'Privada'}
-              </Text>
+            <View style={styles.infoRow}>
+              <View style={styles.infoItem}>
+                <Ionicons name="person" size={20} color="#202024" />
+                <Text style={[styles.infoText, { color: '#202024' }]}>
+                  Propietario: {journal.owner.name}
+                </Text>
+              </View>
+
+              <View style={styles.infoItem}>
+                <Ionicons name="lock-closed" size={20} color="#202024" />
+                <Text style={[styles.infoText, { color: '#202024' }]}>
+                  {journal.is_public ? 'Pública' : 'Privada'}
+                </Text>
+              </View>
             </View>
 
-            <View style={styles.infoItem}>
-              <Ionicons name="key" size={20} color="#202024" />
-              <Text style={[styles.infoText, { color: '#202024' }]}>
-                Código de invitación: {journal.invitation_code}
-              </Text>
+            <View style={styles.invitationCodeContainer}>
+              <View style={styles.invitationCodeInfo}>
+                <Ionicons name="key" size={20} color="#6177c2" />
+                <Text style={[styles.invitationCodeText, { color: '#6177c2' }]}>
+                  Código de invitación: {journal.invitation_code}
+                </Text>
+              </View>
+              <TouchableOpacity 
+                style={styles.copyButton}
+                onPress={async () => {
+                  try {
+                    await Clipboard.setStringAsync(journal.invitation_code);
+                    Alert.alert('Éxito', 'Código de invitación copiado al portapapeles');
+                  } catch (error) {
+                    console.error('Error al copiar código:', error);
+                    Alert.alert('Error', 'No se pudo copiar el código de invitación');
+                  }
+                }}
+              >
+                <Ionicons name="copy-outline" size={20} color="#FFFFFF" />
+                <Text style={styles.copyButtonText}>Copiar</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -198,13 +220,54 @@ const styles = StyleSheet.create({
     gap: 16,
     marginBottom: 32,
   },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
   infoItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
+    minWidth: '45%',
   },
   infoText: {
     fontSize: 16,
+  },
+  invitationCodeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#e7d3c1',
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  invitationCodeInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  invitationCodeText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  copyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#6177c2',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    gap: 8,
+  },
+  copyButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
   section: {
     marginBottom: 32,
