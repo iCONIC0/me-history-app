@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Alert, ActivityIndicator, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Alert, ActivityIndicator, TextInput, KeyboardAvoidingView, Platform, Switch } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../hooks/useAuth';
 import { router } from 'expo-router';
-import { usersService, User } from '../../services/users';
+import { usersService, User } from '../services/users';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function ProfileScreen() {
@@ -46,7 +46,7 @@ export default function ProfileScreen() {
   const handleImagePick = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
@@ -109,21 +109,38 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = async () => {
-    try {
-      await usersService.logout();
-      logout();
-      router.replace('/login');
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-      Alert.alert('Error', 'No se pudo cerrar sesión');
-    }
+    Alert.alert(
+      'Cerrar Sesión',
+      '¿Estás seguro de que deseas cerrar sesión?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Cerrar Sesión',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await usersService.logout();
+              logout();
+              router.replace('/auth/login');
+            } catch (error) {
+              console.error('Error al cerrar sesión:', error);
+              Alert.alert('Error', 'No se pudo cerrar sesión');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   const menuItems = [
     {
       icon: 'person-outline',
       title: 'Editar Perfil',
-      onPress: () => router.push('/profile/edit'),
+      onPress: () => setIsEditing(!isEditing),
     },
     {
       icon: 'notifications-outline',
@@ -143,13 +160,19 @@ export default function ProfileScreen() {
     {
       icon: 'information-circle-outline',
       title: 'Acerca de',
-      onPress: () => console.log('Acerca de'),
+      onPress: () => router.push('/profile/about'),
+    },
+    {
+      icon: 'log-out-outline',
+      title: 'Cerrar Sesión',
+      onPress: handleLogout,
+      color: '#e16b5c',
     },
   ];
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
+      <View style={styles.container}>
         <ActivityIndicator size="large" color="#e16b5c" />
       </View>
     );
@@ -157,7 +180,7 @@ export default function ProfileScreen() {
 
   return (
     <KeyboardAvoidingView 
-      style={[styles.container, { backgroundColor: '#f7f5f2' }]}
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
@@ -172,17 +195,17 @@ export default function ProfileScreen() {
               style={styles.profileImage}
             />
             <TouchableOpacity
-              style={[styles.editImageButton, { backgroundColor: '#e16b5c' }]}
+              style={styles.editImageButton}
               onPress={handleImagePick}
             >
               <Ionicons name="camera" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
           
-          <Text style={[styles.name, { color: '#202024' }]}>
+          <Text style={styles.name}>
             {profile?.name || 'Usuario'}
           </Text>
-          <Text style={[styles.email, { color: '#202024' }]}>
+          <Text style={styles.email}>
             {profile?.email || 'usuario@ejemplo.com'}
           </Text>
         </View>
@@ -190,30 +213,22 @@ export default function ProfileScreen() {
         {isEditing ? (
           <View style={styles.editForm}>
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: '#202024' }]}>Nombre</Text>
+              <Text style={styles.label}>Nombre</Text>
               <TextInput
-                style={[styles.input, { 
-                  backgroundColor: '#e7d3c1',
-                  color: '#202024',
-                  borderColor: '#e7d3c1',
-                }]}
+                style={styles.input}
                 value={formData.name}
-                onChangeText={(text: string) => setFormData(prev => ({ ...prev, name: text }))}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
                 placeholder="Tu nombre"
                 placeholderTextColor="#20202480"
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: '#202024' }]}>Email</Text>
+              <Text style={styles.label}>Email</Text>
               <TextInput
-                style={[styles.input, { 
-                  backgroundColor: '#e7d3c1',
-                  color: '#202024',
-                  borderColor: '#e7d3c1',
-                }]}
+                style={styles.input}
                 value={formData.email}
-                onChangeText={(text: string) => setFormData(prev => ({ ...prev, email: text }))}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
                 placeholder="Tu email"
                 placeholderTextColor="#20202480"
                 keyboardType="email-address"
@@ -222,15 +237,11 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: '#202024' }]}>Contraseña actual</Text>
+              <Text style={styles.label}>Contraseña actual</Text>
               <TextInput
-                style={[styles.input, { 
-                  backgroundColor: '#e7d3c1',
-                  color: '#202024',
-                  borderColor: '#e7d3c1',
-                }]}
+                style={styles.input}
                 value={formData.current_password}
-                onChangeText={(text: string) => setFormData(prev => ({ ...prev, current_password: text }))}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, current_password: text }))}
                 placeholder="Tu contraseña actual"
                 placeholderTextColor="#20202480"
                 secureTextEntry
@@ -238,15 +249,11 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: '#202024' }]}>Nueva contraseña</Text>
+              <Text style={styles.label}>Nueva contraseña</Text>
               <TextInput
-                style={[styles.input, { 
-                  backgroundColor: '#e7d3c1',
-                  color: '#202024',
-                  borderColor: '#e7d3c1',
-                }]}
+                style={styles.input}
                 value={formData.new_password}
-                onChangeText={(text: string) => setFormData(prev => ({ ...prev, new_password: text }))}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, new_password: text }))}
                 placeholder="Nueva contraseña"
                 placeholderTextColor="#20202480"
                 secureTextEntry
@@ -254,15 +261,11 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: '#202024' }]}>Confirmar nueva contraseña</Text>
+              <Text style={styles.label}>Confirmar nueva contraseña</Text>
               <TextInput
-                style={[styles.input, { 
-                  backgroundColor: '#e7d3c1',
-                  color: '#202024',
-                  borderColor: '#e7d3c1',
-                }]}
+                style={styles.input}
                 value={formData.new_password_confirmation}
-                onChangeText={(text: string) => setFormData(prev => ({ ...prev, new_password_confirmation: text }))}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, new_password_confirmation: text }))}
                 placeholder="Confirmar nueva contraseña"
                 placeholderTextColor="#20202480"
                 secureTextEntry
@@ -271,30 +274,32 @@ export default function ProfileScreen() {
 
             <View style={styles.buttonGroup}>
               <TouchableOpacity
-                style={[styles.button, { backgroundColor: '#e16b5c' }]}
-                onPress={handleUpdateProfile}
-              >
-                <Text style={styles.buttonText}>Guardar cambios</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: '#6177c2' }]}
+                style={[styles.button, styles.cancelButton]}
                 onPress={() => setIsEditing(false)}
               >
                 <Text style={styles.buttonText}>Cancelar</Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.saveButton]}
+                onPress={handleUpdateProfile}
+              >
+                <Text style={styles.buttonText}>Guardar</Text>
+              </TouchableOpacity>
             </View>
           </View>
         ) : (
-          <View style={styles.menu}>
+          <View style={styles.menuContainer}>
             {menuItems.map((item, index) => (
               <TouchableOpacity
                 key={index}
-                style={[styles.menuItem, { borderBottomColor: '#e7d3c1' }]}
+                style={styles.menuItem}
                 onPress={item.onPress}
               >
-                <View style={styles.menuItemContent}>
-                  <Ionicons name={item.icon as any} size={24} color="#202024" />
-                  <Text style={[styles.menuItemText, { color: '#202024' }]}>
+                <View style={styles.menuItemLeft}>
+                  <View style={[styles.menuIconContainer, item.color && { backgroundColor: item.color }]}>
+                    <Ionicons name={item.icon as any} size={24} color={item.color || '#6177c2'} />
+                  </View>
+                  <Text style={[styles.menuItemText, item.color && { color: item.color }]}>
                     {item.title}
                   </Text>
                 </View>
@@ -303,14 +308,6 @@ export default function ProfileScreen() {
             ))}
           </View>
         )}
-
-        <TouchableOpacity
-          style={[styles.logoutButton, { backgroundColor: '#e16b5c' }]}
-          onPress={handleLogout}
-        >
-          <Ionicons name="log-out-outline" size={24} color="#FFFFFF" />
-          <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
-        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -319,6 +316,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f7f5f2',
   },
   scrollContent: {
     flexGrow: 1,
@@ -336,6 +334,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
+    backgroundColor: '#e7d3c1',
   },
   editImageButton: {
     position: 'absolute',
@@ -344,16 +343,21 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
+    backgroundColor: '#e16b5c',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   name: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: '#202024',
     marginBottom: 4,
   },
   email: {
     fontSize: 16,
+    color: '#202024',
     opacity: 0.7,
   },
   editForm: {
@@ -365,12 +369,16 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     marginBottom: 8,
+    color: '#202024',
   },
   input: {
     height: 48,
     borderRadius: 8,
     paddingHorizontal: 16,
     borderWidth: 1,
+    borderColor: '#e7d3c1',
+    backgroundColor: '#e7d3c1',
+    color: '#202024',
   },
   buttonGroup: {
     flexDirection: 'row',
@@ -385,41 +393,54 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 8,
   },
+  cancelButton: {
+    backgroundColor: '#6177c2',
+  },
+  saveButton: {
+    backgroundColor: '#e16b5c',
+  },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
-  menu: {
+  menuContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    overflow: 'hidden',
     marginBottom: 32,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 16,
+    padding: 16,
     borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
-  menuItemContent: {
+  menuItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  menuIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
   menuItemText: {
     fontSize: 16,
-    marginLeft: 16,
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 48,
-    borderRadius: 8,
-    marginTop: 'auto',
-  },
-  logoutButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
+    color: '#202024',
   },
 }); 

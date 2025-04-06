@@ -50,42 +50,67 @@ const EventItem = memo(({ item, onPress }: { item: Event; onPress: () => void })
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
 
+  const date = new Date(item.event_date || item.created_at);
+  const day = format(date, 'dd', { locale: es });
+  const month = format(date, 'MMM', { locale: es });
+
   return (
     <TouchableOpacity 
       style={[styles.eventItem, { backgroundColor: '#e7d3c1' }]}
       onPress={onPress}
     >
-      <View style={styles.eventInfo}>
-        <Text style={[styles.eventTitle, { color: '#202024' }]}>{item.title}</Text>
-        <Text style={[styles.eventId, { color: '#202024' }]}>ID: {item.id}</Text>
+      <View style={styles.dateContainer}>
+        <Text style={styles.dayText}>{day}</Text>
+        <Text style={styles.monthText}>{month}</Text>
+      </View>
+      <View style={styles.eventContent}>
+        <Text style={styles.eventTitle} numberOfLines={1}>
+          {item.title}
+        </Text>
         {item.description && (
-          <Text style={[styles.eventDescription, { color: '#202024' }]}>
+          <Text style={styles.eventDescription} numberOfLines={1}>
             {truncateText(item.description, 100)}
           </Text>
         )}
-        <Text style={[styles.eventDate, { color: '#202024' }]}>
-          {format(new Date(item.event_date || item.created_at), "EEEE d 'de' MMMM 'de' yyyy, HH:mm", { locale: es })}
-        </Text>
         <View style={styles.eventMetadata}>
-          {item.type === 'time' && (
-            <View style={styles.eventBadge}>
-              <Ionicons name="time" size={12} color="#e16b5c" />
-              <Text style={[styles.eventBadgeText, { color: '#e16b5c' }]}>
-                {EVENT_TYPES.find(t => t.id === item.type)?.label || item.type}
-              </Text>
-            </View>
-          )}
-          {item.shared_journal && (
-            <View style={styles.eventBadge}>
-              <Ionicons name="book" size={12} color="#e16b5c" />
-              <Text style={[styles.eventBadgeText, { color: '#e16b5c' }]}>
-                {item.shared_journal.name}
-              </Text>
-            </View>
-          )}
+          <View style={styles.metadataRow}>
+            {item.type === 'time' && (
+              <View style={styles.badge}>
+                <Ionicons name="time" size={12} color="#e16b5c" />
+                <Text style={[styles.badgeText, { color: '#e16b5c' }]}>
+                  {EVENT_TYPES.find(t => t.id === item.type)?.label || item.type}
+                </Text>
+              </View>
+            )}
+            {item.category && (
+              <View style={styles.badge}>
+                <Ionicons name="pricetag" size={12} color="#6177c2" />
+                <Text style={[styles.badgeText, { color: '#6177c2' }]}>
+                  {CATEGORY_LABELS[item.category] || item.category}
+                </Text>
+              </View>
+            )}
+          </View>
+          <View style={styles.metadataRow}>
+            {item.shared_journal && (
+              <View style={[styles.badge, styles.journalBadge]}>
+                <Ionicons name="book" size={12} color="#e16b5c" />
+                <Text style={[styles.badgeText, { color: '#e16b5c' }]}>
+                  {item.shared_journal.name}
+                </Text>
+              </View>
+            )}
+            {item.user && (
+              <View style={[styles.badge, styles.userBadge]}>
+                <Ionicons name="person" size={12} color="#202024" />
+                <Text style={[styles.badgeText, { color: '#202024' }]}>
+                  {item.user.name}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
       </View>
-      <Ionicons name="chevron-forward" size={20} color="#202024" />
     </TouchableOpacity>
   );
 });
@@ -265,42 +290,61 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 8,
   },
-  eventInfo: {
+  dateContainer: {
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  dayText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#202024',
+  },
+  monthText: {
+    fontSize: 16,
+    color: '#202024',
+    textTransform: 'uppercase',
+  },
+  eventContent: {
     flex: 1,
   },
   eventTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    color: '#202024',
     marginBottom: 4,
-  },
-  eventId: {
-    fontSize: 12,
-    marginBottom: 4,
-    opacity: 0.7,
   },
   eventDescription: {
     fontSize: 14,
-    marginBottom: 4,
-  },
-  eventDate: {
-    fontSize: 12,
-    marginBottom: 4,
+    color: '#202024',
+    opacity: 0.7,
+    marginBottom: 8,
   },
   eventMetadata: {
-    flexDirection: 'row',
     gap: 8,
   },
-  eventBadge: {
+  metadataRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF40',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
     gap: 4,
   },
-  eventBadgeText: {
+  journalBadge: {
+    backgroundColor: '#FFE4E1',
+  },
+  userBadge: {
+    backgroundColor: '#F5F5F5',
+  },
+  badgeText: {
     fontSize: 12,
+    fontWeight: '500',
   },
   separator: {
     height: 8,
