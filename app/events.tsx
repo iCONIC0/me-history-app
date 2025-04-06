@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { EventCard } from '../components/EventCard';
 
 // Tipos de eventos disponibles
 const EVENT_TYPES = [
@@ -45,73 +46,11 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 // Componente de elemento de evento optimizado con memo
 const EventItem = memo(({ item, onPress }: { item: Event; onPress: () => void }) => {
-  const truncateText = (text: string, maxLength: number) => {
-    if (!text) return '';
-    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
-  };
-
-  const date = new Date(item.event_date || item.created_at);
-  const day = format(date, 'dd', { locale: es });
-  const month = format(date, 'MMM', { locale: es });
-
   return (
-    <TouchableOpacity 
-      style={[styles.eventItem, { backgroundColor: '#e7d3c1' }]}
+    <EventCard 
+      event={item}
       onPress={onPress}
-    >
-      <View style={styles.dateContainer}>
-        <Text style={styles.dayText}>{day}</Text>
-        <Text style={styles.monthText}>{month}</Text>
-      </View>
-      <View style={styles.eventContent}>
-        <Text style={styles.eventTitle} numberOfLines={1}>
-          {item.title}
-        </Text>
-        {item.description && (
-          <Text style={styles.eventDescription} numberOfLines={1}>
-            {truncateText(item.description, 100)}
-          </Text>
-        )}
-        <View style={styles.eventMetadata}>
-          <View style={styles.metadataRow}>
-            {item.type === 'time' && (
-              <View style={styles.badge}>
-                <Ionicons name="time" size={12} color="#e16b5c" />
-                <Text style={[styles.badgeText, { color: '#e16b5c' }]}>
-                  {EVENT_TYPES.find(t => t.id === item.type)?.label || item.type}
-                </Text>
-              </View>
-            )}
-            {item.category && (
-              <View style={styles.badge}>
-                <Ionicons name="pricetag" size={12} color="#6177c2" />
-                <Text style={[styles.badgeText, { color: '#6177c2' }]}>
-                  {CATEGORY_LABELS[item.category] || item.category}
-                </Text>
-              </View>
-            )}
-          </View>
-          <View style={styles.metadataRow}>
-            {item.shared_journal && (
-              <View style={[styles.badge, styles.journalBadge]}>
-                <Ionicons name="book" size={12} color="#e16b5c" />
-                <Text style={[styles.badgeText, { color: '#e16b5c' }]}>
-                  {item.shared_journal.name}
-                </Text>
-              </View>
-            )}
-            {item.user && (
-              <View style={[styles.badge, styles.userBadge]}>
-                <Ionicons name="person" size={12} color="#202024" />
-                <Text style={[styles.badgeText, { color: '#202024' }]}>
-                  {item.user.name}
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-      </View>
-    </TouchableOpacity>
+    />
   );
 });
 

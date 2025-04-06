@@ -8,6 +8,7 @@ import { journalsService, Journal } from '../services/journals';
 import { useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { EventCard } from '../components/EventCard';
 
 // Tipos de eventos disponibles
 const EVENT_TYPES = [
@@ -107,68 +108,11 @@ export default function HomeScreen() {
   };
 
   const renderEventItem = ({ item }: { item: Event }) => {
-    const date = new Date(item.event_date || item.created_at);
-    const day = format(date, 'dd', { locale: es });
-    const month = format(date, 'MMM', { locale: es });
-
     return (
-      <TouchableOpacity 
-        style={[styles.eventItem, { backgroundColor: '#e7d3c1' }]}
-        onPress={() => router.push(`/event/${item.id}`)}
-      >
-        <View style={styles.dateContainer}>
-          <Text style={styles.dayText}>{day}</Text>
-          <Text style={styles.monthText}>{month}</Text>
-        </View>
-        <View style={styles.eventContent}>
-          <Text style={styles.eventTitle} numberOfLines={1}>
-            {item.title}
-          </Text>
-          {item.description && (
-            <Text style={styles.eventDescription} numberOfLines={1}>
-              {item.description}
-            </Text>
-          )}
-          <View style={styles.eventMetadata}>
-            <View style={styles.metadataRow}>
-              {item.type === 'time' && (
-                <View style={styles.badge}>
-                  <Ionicons name="time" size={12} color="#e16b5c" />
-                  <Text style={[styles.badgeText, { color: '#e16b5c' }]}>
-                    {EVENT_TYPES.find(t => t.id === item.type)?.label || item.type}
-                  </Text>
-                </View>
-              )}
-              {item.category && (
-                <View style={styles.badge}>
-                  <Ionicons name="pricetag" size={12} color="#6177c2" />
-                  <Text style={[styles.badgeText, { color: '#6177c2' }]}>
-                    {CATEGORY_LABELS[item.category] || item.category}
-                  </Text>
-                </View>
-              )}
-            </View>
-            <View style={styles.metadataRow}>
-              {item.shared_journal && (
-                <View style={[styles.badge, styles.journalBadge]}>
-                  <Ionicons name="book" size={12} color="#e16b5c" />
-                  <Text style={[styles.badgeText, { color: '#e16b5c' }]}>
-                    {item.shared_journal.name}
-                  </Text>
-                </View>
-              )}
-              {item.user && (
-                <View style={[styles.badge, styles.userBadge]}>
-                  <Ionicons name="person" size={12} color="#202024" />
-                  <Text style={[styles.badgeText, { color: '#202024' }]}>
-                    {item.user.name}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </View>
-        </View>
-      </TouchableOpacity>
+      <EventCard 
+        event={item}
+        onPress={(eventId) => router.push(`/event/${eventId}`)}
+      />
     );
   };
 
@@ -465,6 +409,7 @@ const styles = StyleSheet.create({
   dateContainer: {
     alignItems: 'center',
     marginRight: 16,
+    paddingRight: 16,
   },
   dayText: {
     fontSize: 24,
@@ -519,7 +464,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   separator: {
-    height: 8,
+    width: 1,
+    backgroundColor: '#202024',
+    opacity: 0.2,
+    marginRight: 16,
+    height: '100%',
   },
   emptyState: {
     alignItems: 'center',
