@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView, Image, Modal, Dimensions, FlatList } from 'react-native';
 import { useTheme } from '@react-navigation/native';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { eventsService, Event } from '../../services/events';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
@@ -65,6 +65,7 @@ export default function EventDetailScreen() {
   const [event, setEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'images' | 'videos' | 'audio'>('images');
   
   // Estados para la visualización de medios
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
@@ -95,8 +96,49 @@ export default function EventDetailScreen() {
       if (sound) {
         sound.unloadAsync();
       }
+      // Detener todos los videos
+      Object.values(videoRefs.current).forEach(video => {
+        if (video) {
+          video.stopAsync();
+        }
+      });
+      // Limpiar referencias
+      videoRefs.current = {};
+      setIsVideoPlaying({});
     };
   }, [id]);
+
+  // Reemplazar el efecto que usa router.addListener
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        // Esta función se ejecuta cuando la pantalla pierde el foco
+        stopAllMedia();
+      };
+    }, [sound, isPlaying])
+  );
+
+  // Función para detener todos los medios
+  const stopAllMedia = async () => {
+    // Detener audio
+    if (sound && isPlaying) {
+      await sound.pauseAsync();
+      setIsPlaying(false);
+    }
+    // Detener videos
+    Object.values(videoRefs.current).forEach(video => {
+      if (video) {
+        video.stopAsync();
+      }
+    });
+    setIsVideoPlaying({});
+  };
+
+  // Modificar la función de cambio de pestaña
+  const handleTabChange = (tab: 'images' | 'videos' | 'audio') => {
+    stopAllMedia();
+    setActiveTab(tab);
+  };
 
   const loadEvent = async () => {
     try {
@@ -383,6 +425,25 @@ export default function EventDetailScreen() {
     );
   };
 
+  // Función para filtrar medios por tipo
+  const getFilteredMedia = (type: 'images' | 'videos' | 'audio') => {
+    if (!event?.media) return [];
+    
+    return event.media.filter(media => {
+      const fileExtension = media.file_path.split('.').pop()?.toLowerCase();
+      switch (type) {
+        case 'images':
+          return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension || '');
+        case 'videos':
+          return ['mp4', 'mov', 'avi', 'webm'].includes(fileExtension || '');
+        case 'audio':
+          return ['mp3', 'wav', 'm4a', 'aac'].includes(fileExtension || '');
+        default:
+          return false;
+      }
+    });
+  };
+
   if (isLoading) {
     return (
       <View style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
@@ -475,36 +536,18 @@ export default function EventDetailScreen() {
               Incluido en bitácora personal: {event.include_in_personal_journal ? 'Sí' : 'No'}
             </Text>
           </View>
+
+          {event.description && (
+            <View style={styles.descriptionContainer}>
+              <Text style={[styles.descriptionTitle, { color: '#202024' }]}>
+                Descripción
+              </Text>
+              <Text style={[styles.description, { color: '#202024' }]}>
+                {event.description}
+              </Text>
+            </View>
+          )}
         </View>
-
-        {event.description && (
-          <View style={styles.descriptionContainer}>
-            <Text style={[styles.descriptionTitle, { color: '#202024' }]}>
-              Descripción
-            </Text>
-            <Text style={[styles.description, { color: '#202024' }]}>
-              {event.description}
-            </Text>
-          </View>
-        )}
-
-        {event.metadata && Object.keys(event.metadata).length > 0 && (
-          <View style={styles.metadataContainer}>
-            <Text style={[styles.metadataTitle, { color: '#202024' }]}>
-              Detalles adicionales
-            </Text>
-            {Object.entries(event.metadata).map(([key, value]) => (
-              <View key={key} style={styles.metadataItem}>
-                <Text style={[styles.metadataKey, { color: '#202024' }]}>
-                  {key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ')}:
-                </Text>
-                <Text style={[styles.metadataValue, { color: '#202024' }]}>
-                  {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                </Text>
-              </View>
-            ))}
-          </View>
-        )}
 
         {event.media && event.media.length > 0 && (
           <View style={styles.mediaContainer}>
@@ -512,80 +555,91 @@ export default function EventDetailScreen() {
               Multimedia 
             </Text>
             
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {event.media.map((media, index) => {
-                // Determinar el tipo de medio basado en la extensión del archivo
-                const fileExtension = media.file_path.split('.').pop()?.toLowerCase();
-                const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension || '');
-                const isVideo = ['mp4', 'mov', 'avi', 'webm'].includes(fileExtension || '');
-                const isAudio = ['mp3', 'wav', 'm4a', 'aac'].includes(fileExtension || '');
-                
-                if (isImage) {
-                  return (
-                    <TouchableOpacity 
-                      key={media.id} 
-                      onPress={() => openImageModal(index)}
-                    >
-                      <Image
-                        source={{ uri: media.file_path }}
-                        style={styles.mediaThumbnail}
-                      />
-                    </TouchableOpacity>
-                  );
-                } else if (isVideo) {
-                  return (
-                    <View key={media.id} style={styles.mediaThumbnailContainer}>
-                      <Video
-                        source={{ uri: media.file_path }}
-                        style={styles.mediaThumbnail}
-                        resizeMode={ResizeMode.COVER}
-                        shouldPlay={false}
-                        isMuted={true}
-                      />
-                      <View style={styles.mediaTypeIndicator}>
-                        <Ionicons name="videocam" size={16} color="white" />
-                      </View>
-                    </View>
-                  );
-                } else if (isAudio) {
-                  return (
-                    <View key={media.id} style={styles.mediaThumbnailContainer}>
-                      <View style={styles.audioThumbnail}>
-                        <Ionicons name="musical-note" size={24} color="#e16b5c" />
-                      </View>
-                      <View style={styles.mediaTypeIndicator}>
-                        <Ionicons name="musical-note" size={16} color="white" />
-                      </View>
-                    </View>
-                  );
-                }
-                
-                return null;
-              })}
-            </ScrollView>
-            
-            {/* Reproductores de audio y video */}
-            {event.media.map((media, index) => {
-              const fileExtension = media.file_path.split('.').pop()?.toLowerCase();
-              const isVideo = ['mp4', 'mov', 'avi', 'webm'].includes(fileExtension || '');
-              const isAudio = ['mp3', 'wav', 'm4a', 'aac'].includes(fileExtension || '');
+            <View style={styles.tabsContainer}>
+              <TouchableOpacity 
+                style={[styles.tab, activeTab === 'images' && styles.activeTab]}
+                onPress={() => handleTabChange('images')}
+              >
+                <Ionicons 
+                  name="images" 
+                  size={20} 
+                  color={activeTab === 'images' ? '#e16b5c' : '#666'} 
+                />
+                <Text style={[styles.tabText, activeTab === 'images' && styles.activeTabText]}>
+                  Imágenes
+                </Text>
+              </TouchableOpacity>
               
-              if (isAudio) {
-                return (
-                  <View key={`audio-player-${media.id}`} style={styles.mediaPlayerContainer}>
-                    {renderAudioPlayer(media)}
-                  </View>
-                );
-              } else if (isVideo) {
-                return (
-                  <View key={`video-player-${media.id}`} style={styles.mediaPlayerContainer}>
+              <TouchableOpacity 
+                style={[styles.tab, activeTab === 'videos' && styles.activeTab]}
+                onPress={() => handleTabChange('videos')}
+              >
+                <Ionicons 
+                  name="videocam" 
+                  size={20} 
+                  color={activeTab === 'videos' ? '#e16b5c' : '#666'} 
+                />
+                <Text style={[styles.tabText, activeTab === 'videos' && styles.activeTabText]}>
+                  Videos
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.tab, activeTab === 'audio' && styles.activeTab]}
+                onPress={() => handleTabChange('audio')}
+              >
+                <Ionicons 
+                  name="musical-note" 
+                  size={20} 
+                  color={activeTab === 'audio' ? '#e16b5c' : '#666'} 
+                />
+                <Text style={[styles.tabText, activeTab === 'audio' && styles.activeTabText]}>
+                  Audio
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {activeTab === 'images' && getFilteredMedia('images').length > 0 && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {getFilteredMedia('images').map((media, index) => (
+                  <TouchableOpacity 
+                    key={media.id} 
+                    onPress={() => openImageModal(index)}
+                  >
+                    <Image
+                      source={{ uri: media.file_path }}
+                      style={styles.mediaThumbnail}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+
+            {activeTab === 'videos' && getFilteredMedia('videos').length > 0 && (
+              <View>
+                {getFilteredMedia('videos').map((media, index) => (
+                  <View key={media.id} style={styles.videoContainer}>
                     {renderVideoPlayer(media, index)}
                   </View>
-                );
-              }
-              
-              return null;
-            })}
+                ))}
+              </View>
+            )}
+
+            {activeTab === 'audio' && getFilteredMedia('audio').length > 0 && (
+              <View>
+                {getFilteredMedia('audio').map((media) => (
+                  <View key={media.id} style={styles.audioContainer}>
+                    {renderAudioPlayer(media)}
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {getFilteredMedia(activeTab).length === 0 && (
+              <Text style={styles.noMediaText}>
+                No hay {activeTab === 'images' ? 'imágenes' : activeTab === 'videos' ? 'videos' : 'archivos de audio'} disponibles
+              </Text>
+            )}
           </View>
         )}
       </View>
@@ -736,37 +790,22 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   descriptionContainer: {
-    marginBottom: 24,
+    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
   },
   descriptionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
     marginBottom: 8,
   },
   description: {
     fontSize: 16,
     lineHeight: 24,
-  },
-  metadataContainer: {
-    marginBottom: 24,
-  },
-  metadataTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  metadataItem: {
-    flexDirection: 'row',
-    marginBottom: 8,
-  },
-  metadataKey: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginRight: 8,
-  },
-  metadataValue: {
-    fontSize: 16,
-    flex: 1,
   },
   mediaContainer: {
     marginBottom: 24,
@@ -781,62 +820,6 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 8,
     marginRight: 12,
-  },
-  mediaThumbnailContainer: {
-    position: 'relative',
-    marginRight: 12,
-  },
-  mediaTypeIndicator: {
-    position: 'absolute',
-    bottom: 8,
-    right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 12,
-    padding: 4,
-  },
-  audioThumbnail: {
-    width: 120,
-    height: 120,
-    borderRadius: 8,
-    backgroundColor: '#e7d3c1',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mediaPlayerContainer: {
-    marginTop: 16,
-    marginBottom: 16,
-  },
-  audioContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#e7d3c1',
-    borderRadius: 8,
-    padding: 12,
-  },
-  audioPlayButton: {
-    marginRight: 12,
-  },
-  audioControls: {
-    flex: 1,
-  },
-  audioTimeText: {
-    fontSize: 12,
-    color: '#202024',
-    marginBottom: 4,
-  },
-  audioProgressContainer: {
-    height: 4,
-    backgroundColor: '#d0c0b0',
-    borderRadius: 2,
-    marginBottom: 4,
-  },
-  audioProgress: {
-    height: '100%',
-    backgroundColor: '#e16b5c',
-    borderRadius: 2,
-  },
-  audioSeekButton: {
-    padding: 4,
   },
   videoContainer: {
     position: 'relative',
@@ -912,5 +895,39 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '500',
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    backgroundColor: '#f7f5f2',
+    borderRadius: 12,
+    padding: 4,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 8,
+    borderRadius: 8,
+    gap: 4,
+  },
+  activeTab: {
+    backgroundColor: '#e16b5c20',
+  },
+  tabText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  activeTabText: {
+    color: '#e16b5c',
+    fontWeight: '500',
+  },
+  noMediaText: {
+    textAlign: 'center',
+    color: '#666',
+    fontSize: 14,
+    fontStyle: 'italic',
+    marginTop: 16,
   },
 }); 

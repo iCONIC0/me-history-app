@@ -16,6 +16,7 @@ import {
   TextStyle,
   ImageStyle,
   Linking,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,6 +29,8 @@ import { es } from 'date-fns/locale';
 import * as ImagePicker from 'expo-image-picker';
 import { Audio } from 'expo-av';
 import { Video, ResizeMode } from 'expo-av';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { RichTextEditor } from '../components/RichTextEditor';
 
 // Tipos de eventos disponibles
 const EVENT_TYPES = [
@@ -38,7 +41,29 @@ const EVENT_TYPES = [
   { id: 'mixed', icon: 'albums', label: 'Mixto' },
   { id: 'time', icon: 'time', label: 'Tiempo' },
 ];
-
+const CATEGORY_LABELS: Record<string, string> = {
+  'life-diary': 'Diario de Vida',
+  'health': 'Salud',
+  'work': 'Trabajo',
+  'study': 'Estudio',
+  'social': 'Social',
+  'hobby': 'Pasatiempos',
+  'travel': 'Viajes',
+  'food': 'Comida',
+  'sports': 'Deportes',
+  'entertainment': 'Entretenimiento',
+  'other': 'Otros',
+  'fitness': 'Fitness',
+  'meditation': 'Meditación',
+  'reading': 'Lectura',
+  'writing': 'Escritura',
+  'art': 'Arte',
+  'music': 'Música',
+  'family': 'Familia',
+  'friends': 'Amigos',
+  'dating': 'Citas',
+  'eat': 'Comida',
+};
 // Categorías de eventos disponibles
 const EVENT_CATEGORIES = [
   { id: 'life-diary', icon: 'book', label: 'Diario' },
@@ -71,11 +96,61 @@ const EVENT_TYPE_FIELDS = {
   time: [], // Removemos el campo time ya que usamos date directamente
 };
 
+interface MediaFile {
+  uri: string;
+  type: 'image' | 'video' | 'audio';
+  name?: string;
+}
+
+// Añadir el tipo para el DateTimePicker
+type DateTimePickerComponent = any;
+
+// Componente personalizado para el DateTimePicker
+const CustomDateTimePicker = ({ 
+  value, 
+  onChange, 
+  show,
+  mode
+}: { 
+  value: Date; 
+  onChange: (event: DateTimePickerEvent, date?: Date) => void;
+  show: boolean;
+  mode?: 'date' | 'time';
+}) => {
+  if (Platform.OS === 'ios') {
+    return (
+      <DateTimePicker
+        value={value}
+        mode="datetime"
+        display="spinner"
+        onChange={onChange}
+        locale="es"
+        style={{ width: '100%', height: 200 }}
+        textColor="#202024"
+      />
+    );
+  }
+
+  // En Android, mostramos el picker nativo directamente
+  if (show) {
+    return (
+      <DateTimePicker
+        value={value}
+        mode={mode || 'date'}
+        onChange={onChange}
+        locale="es"
+      />
+    );
+  }
+  
+  return null;
+};
+
 export default function CreateEventScreen() {
   const { colors } = useTheme();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [type, setType] = useState('text');
+  const [type, setType] = useState('mixed');
   const [category, setCategory] = useState('life-diary');
   const [date, setDate] = useState(new Date());
   const [showDateModal, setShowDateModal] = useState(false);
@@ -87,6 +162,7 @@ export default function CreateEventScreen() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [metadata, setMetadata] = useState<Record<string, any>>({});
   const [datePickerStep, setDatePickerStep] = useState<'date' | 'time'>('date');
+  const [showDatePicker, setShowDatePicker] = useState(false);
   
   // Estados para manejo de medios
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -109,166 +185,311 @@ export default function CreateEventScreen() {
   const recordingTimer = useRef<NodeJS.Timeout | null>(null);
   const playbackTimer = useRef<NodeJS.Timeout | null>(null);
 
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
+
+  // Añadir el estado para el modal
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [showJournalModal, setShowJournalModal] = useState(false);
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.background,
+      backgroundColor: '#f7f5f2',
     },
     header: {
       flexDirection: 'row',
       alignItems: 'center',
-      padding: 20,
+      justifyContent: 'space-between',
+      padding: 16,
+      backgroundColor: '#FFFFFF',
       borderBottomWidth: 1,
-      borderBottomColor: colors.border,
+      borderBottomColor: '#E5E5E5',
+      elevation: 2,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
     },
     backButton: {
-      marginRight: 16,
+      padding: 8,
+      backgroundColor: '#F5F5F5',
+      borderRadius: 8,
     },
-    title: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      color: colors.text,
+    headerTitle: {
+      flex: 1,
+      fontSize: 20,
+      fontWeight: '600',
+      color: '#202024',
+      marginLeft: 12,
+      textAlign: 'center',
     },
     content: {
       flex: 1,
-      padding: 20,
+      padding: 16,
+      width: '100%',
     },
-    formGroup: {
-      marginBottom: 20,
+    inputContainer: {
+      backgroundColor: '#FFFFFF',
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 16,
+      width: '100%',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 2,
     },
     label: {
-      fontSize: 16,
-      fontWeight: '500',
-      marginBottom: 8,
-      color: colors.text,
-    },
-    input: {
-      borderRadius: 8,
-      padding: 12,
-      fontSize: 16,
-      backgroundColor: colors.card,
-      color: colors.text,
-    },
-    textArea: {
-      height: 100,
-      textAlignVertical: 'top',
-    },
-    mediaContainer: {
-      marginTop: 20,
-    },
-    mediaOptions: {
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-    },
-    mediaOption: {
-      padding: 16,
-      borderRadius: 8,
-      alignItems: 'center',
-      width: '45%',
-      backgroundColor: colors.card,
-    },
-    mediaOptionText: {
-      marginTop: 8,
       fontSize: 14,
-      color: colors.text,
+      fontWeight: '500',
+      color: '#666',
+      marginBottom: 8,
+      textTransform: 'uppercase',
+    },
+    titleInput: {
+      fontSize: 24,
+      fontWeight: '500',
+      color: '#202024',
+      padding: 12,
+      borderRadius: 12,
+      marginBottom: 16,
+      borderWidth: 1,
+      borderColor: '#E5E5E5',
+      backgroundColor: '#FFFFFF',
+    },
+    editorContainer: {
+      minHeight: 200,
+    },
+    mediaButtonsContainer: {
+      marginTop: 16,
+      paddingTop: 16,
+      borderTopWidth: 1,
+      borderTopColor: '#E5E5E5',
+    },
+    mediaButtons: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      justifyContent: 'space-around',
+      width: '100%',
+      marginBottom:16
+    },
+    mediaButton: {
+      width: '30%',
+      backgroundColor: '#f7f5f2',
+      borderRadius: 12,
+      padding: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 4,
+    },
+    mediaButtonActive: {
+      backgroundColor: '#e16b5c20',
+    },
+    mediaButtonText: {
+      fontSize: 10,
+      color: '#666',
+      textAlign: 'center',
+      marginTop: 2,
+    },
+    mediaPreviewsContainer: {
+      marginBottom: 16,
+    },
+    mediaPreviewGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 6,
+      paddingHorizontal: 4,
+    },
+    mediaPreviewItem: {
+      position: 'relative',
+      width: '31%',
+      marginBottom: 6,
     },
     mediaPreview: {
-      position: 'relative',
-      alignItems: 'center',
+      width: '100%',
+      aspectRatio: 1,
+      borderRadius: 8,
+      backgroundColor: '#F0F0F0',
     },
     imagePreview: {
       width: '100%',
-      height: 200,
+      aspectRatio: 1,
       borderRadius: 8,
+      backgroundColor: '#F0F0F0',
     },
-    audioPreview: {
+    videoPreview: {
       width: '100%',
-      height: 100,
+      aspectRatio: 16/9,
       borderRadius: 8,
-      justifyContent: 'center',
-      alignItems: 'center',
-      flexDirection: 'row',
+      backgroundColor: '#F0F0F0',
+    },
+    audioPreviewContainer: {
+      width: '100%',
+      backgroundColor: '#f7f5f2',
+      borderRadius: 12,
+      padding: 12,
+      marginBottom: 8,
     },
     audioPlayerContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      width: '100%',
-      padding: 8,
+      gap: 12,
     },
     audioPlayButton: {
-      marginRight: 12,
+      padding: 4,
     },
     audioControls: {
       flex: 1,
     },
     audioTimeText: {
       fontSize: 12,
+      color: '#666',
       marginBottom: 4,
     },
     audioProgressContainer: {
       height: 4,
-      backgroundColor: '#d0c0b0',
+      backgroundColor: '#E5E5E5',
       borderRadius: 2,
-      marginBottom: 4,
     },
     audioProgress: {
       height: '100%',
       backgroundColor: '#e16b5c',
       borderRadius: 2,
     },
-    audioSeekButtons: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-    },
-    audioSeekButton: {
-      padding: 4,
-    },
-    videoPreview: {
-      width: '100%',
-      height: 200,
-      borderRadius: 8,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    videoPreviewText: {
-      marginLeft: 8,
-      fontSize: 16,
-    },
-    removeMediaButton: {
+    removeButton: {
       position: 'absolute',
-      top: -10,
-      right: -10,
-      backgroundColor: colors.card,
-      borderRadius: 12,
-    },
-    recordingInfo: {
-      marginTop: 8,
-      fontSize: 12,
-      fontStyle: 'italic',
+      top: -6,
+      right: -6,
+      backgroundColor: '#FFFFFF',
+      borderRadius: 10,
+      padding: 2,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 1,
+      elevation: 2,
     },
     submitButton: {
+      backgroundColor: '#e16b5c',
+      borderRadius: 12,
       padding: 16,
-      borderRadius: 8,
       alignItems: 'center',
-      marginTop: 20,
-      marginBottom: 40,
+      marginVertical: 24,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 2,
     },
     submitButtonText: {
       color: '#FFFFFF',
       fontSize: 16,
       fontWeight: '600',
     },
-    journalButton: {
-      backgroundColor: '#34C759',
-      padding: 15,
-      borderRadius: 10,
+    recordingIndicator: {
+      flexDirection: 'row',
       alignItems: 'center',
-      marginTop: 10,
+      justifyContent: 'center',
+      padding: 8,
+      backgroundColor: '#FF3B3020',
+      borderRadius: 16,
+      marginTop: 8,
+      gap: 8,
     },
-    journalButtonText: {
-      color: 'white',
+    recordingText: {
+      color: '#FF3B30',
+      fontSize: 12,
+      fontWeight: '500',
+    },
+    audioPreview: {
+      width: '100%',
+      padding: 16,
+      borderRadius: 12,
+      marginBottom: 8,
+    },
+    audioPlayerContainer: {
+      flexDirection: 'column',
+      alignItems: 'center',
+      width: '100%',
+    },
+    audioTimeText: {
+      fontSize: 14,
+      marginBottom: 8,
+    },
+    audioProgressContainer: {
+      width: '100%',
+      height: 4,
+      backgroundColor: '#E5E5E5',
+      borderRadius: 2,
+      marginBottom: 8,
+    },
+    audioPlayButton: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: '#007AFF',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    audioSeekButtons: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      width: '60%',
+      marginTop: 8,
+    },
+    audioSeekButton: {
+      padding: 8,
+      borderRadius: 20,
+      backgroundColor: '#F0F0F0',
+    },
+    formGroup: {
+      marginBottom: 16,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: '#E5E5E5',
+      borderRadius: 8,
+      padding: 12,
       fontSize: 16,
-      fontWeight: 'bold',
+      minHeight: 48,
+    },
+    textArea: {
+      minHeight: 120,
+      textAlignVertical: 'top',
+    },
+    mediaContainer: {
+      borderWidth: 1,
+      borderColor: '#E5E5E5',
+      borderRadius: 8,
+      overflow: 'hidden',
+    },
+    mediaOptions: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      padding: 16,
+    },
+    mediaOption: {
+      alignItems: 'center',
+      padding: 12,
+      borderRadius: 8,
+      minWidth: 100,
+    },
+    mediaOptionText: {
+      marginTop: 8,
+      fontSize: 14,
+    },
+    removeMediaButton: {
+      position: 'absolute',
+      top: 8,
+      right: 8,
+      backgroundColor: 'white',
+      borderRadius: 12,
+      padding: 4,
     },
     selectButton: {
       flexDirection: 'row',
@@ -282,190 +503,166 @@ export default function CreateEventScreen() {
     selectButtonText: {
       fontSize: 16,
     },
-    switchContainer: {
+    recordingInfo: {
+      fontSize: 12,
+      textAlign: 'center',
+      marginTop: 8,
+      fontStyle: 'italic',
+    },
+    modalContainer: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    modalContent: {
+      backgroundColor: '#FFFFFF',
+      padding: 20,
+      borderRadius: 12,
+      width: '90%',
+      maxHeight: '80%',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    modalHeader: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+      marginBottom: 16,
+      paddingBottom: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: '#E5E5E5',
     },
-    journalsContainer: {
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: '#202024',
+    },
+    modalCloseButton: {
+      fontSize: 24,
+      color: '#666',
+      padding: 4,
+    },
+    dateTimePicker: {
+      backgroundColor: '#FFFFFF',
+      height: 200,
+    },
+    categorySelector: {
+      marginBottom: 16,
+    },
+    categoryLabel: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: '#666',
+      marginBottom: 8,
+    },
+    categoryScrollContent: {
+      paddingRight: 16,
+    },
+    categoryButton: {
       flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 10,
+      alignItems: 'center',
+      backgroundColor: '#F5F5F5',
+      borderRadius: 20,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      marginRight: 8,
+    },
+    categoryButtonActive: {
+      backgroundColor: '#e16b5c',
+    },
+    categoryButtonText: {
+      fontSize: 14,
+      color: '#666',
+      marginLeft: 4,
+    },
+    categoryButtonTextActive: {
+      color: '#FFFFFF',
     },
     modalOverlay: {
       flex: 1,
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      justifyContent: 'flex-end',
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     modalContent: {
-      borderTopLeftRadius: 20,
-      borderTopRightRadius: 20,
+      backgroundColor: '#FFFFFF',
+      borderRadius: 16,
       padding: 20,
-      maxHeight: '80%',
-    },
-    modalHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 20,
+      width: '80%',
+      maxWidth: 400,
     },
     modalTitle: {
-      fontSize: 20,
-      fontWeight: 'bold',
+      fontSize: 18,
+      fontWeight: '600',
+      color: '#202024',
+      textAlign: 'center',
+      marginBottom: 20,
     },
     modalOptions: {
-      maxHeight: '80%',
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      marginBottom: 20,
     },
     modalOption: {
-      flexDirection: 'row',
       alignItems: 'center',
       padding: 16,
-      borderRadius: 8,
-      marginBottom: 8,
-      borderWidth: 1,
-      borderColor: 'transparent',
+      borderRadius: 12,
+      backgroundColor: '#f7f5f2',
+      width: '45%',
     },
     modalOptionText: {
+      marginTop: 8,
+      fontSize: 14,
+      color: '#666',
+    },
+    modalCancelButton: {
+      borderTopWidth: 1,
+      borderTopColor: '#E5E5E5',
+      paddingTop: 16,
+      alignItems: 'center',
+    },
+    modalCancelText: {
+      color: '#666',
       fontSize: 16,
-      marginLeft: 12,
+      fontWeight: '500',
     },
-    datePickerContainer: {
-      padding: 20,
+    journalSelector: {
+      marginTop: 16,
+      marginBottom: 16, 
     },
-    datePickerHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 16,
-    },
-    datePickerTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-    },
-    datePickerControls: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 16,
-    },
-    calendarGrid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'space-between',
-    },
-    calendarDayHeader: {
-      width: '14.28%',
-      textAlign: 'center',
+    journalLabel: {
       fontSize: 14,
       fontWeight: '500',
+      color: '#666',
       marginBottom: 8,
+      textTransform: 'uppercase',
     },
-    calendarDay: {
-      width: '14.28%',
-      aspectRatio: 1,
-      justifyContent: 'center',
+    journalScrollContent: {
+      paddingRight: 16,
+    },
+    journalButton: {
+      flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 8,
-      borderRadius: 8,
+      backgroundColor: '#F5F5F5',
+      borderRadius: 20,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      marginRight: 8,
+      gap: 4,
     },
-    calendarDayText: {
-      fontSize: 16,
+    journalButtonActive: {
+      backgroundColor: '#e16b5c',
     },
-    nextButton: {
-      padding: 16,
-      borderRadius: 8,
-      alignItems: 'center',
-      marginTop: 20,
+    journalButtonText: {
+      fontSize: 14,
+      color: '#666',
     },
-    nextButtonText: {
+    journalButtonTextActive: {
       color: '#FFFFFF',
-      fontSize: 16,
-      fontWeight: '600',
-    },
-    timePickerContainer: {
-      padding: 20,
-    },
-    timePickerControls: {
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-    },
-    timePickerColumn: {
-      flex: 1,
-      alignItems: 'center',
-    },
-    timePickerLabel: {
-      fontSize: 16,
-      marginBottom: 8,
-    },
-    timePickerScroll: {
-      height: 200,
-    },
-    timePickerOption: {
-      padding: 12,
-      borderRadius: 8,
-      marginVertical: 4,
-      width: '100%',
-      alignItems: 'center',
-    },
-    timePickerOptionText: {
-      fontSize: 16,
-    },
-    timePickerActions: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginTop: 20,
-    },
-    datePickerBackButton: {
-      padding: 16,
-      borderRadius: 8,
-      alignItems: 'center',
-      flex: 1,
-      marginRight: 10,
-    },
-    datePickerBackButtonText: {
-      fontSize: 16,
-      fontWeight: '600',
-    },
-    confirmButton: {
-      padding: 16,
-      borderRadius: 8,
-      alignItems: 'center',
-      flex: 1,
-      marginLeft: 10,
-    },
-    confirmButtonText: {
-      color: '#FFFFFF',
-      fontSize: 16,
-      fontWeight: '600',
-    },
-    cameraContainer: {
-      flex: 1,
-    },
-    camera: {
-      flex: 1,
-    },
-    cameraControls: {
-      flex: 1,
-      backgroundColor: 'transparent',
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-      alignItems: 'flex-end',
-      paddingBottom: 20,
-    },
-    cameraButton: {
-      position: 'absolute',
-      top: 40,
-      left: 20,
-      zIndex: 10,
-    },
-    cameraPermissionContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: colors.background,
-    },
-    cameraPermissionText: {
-      fontSize: 16,
-      color: colors.text,
     },
   });
 
@@ -482,9 +679,45 @@ export default function CreateEventScreen() {
     }
   };
 
-  const handleDateChange = (newDate: Date) => {
-    setDate(newDate);
-    setDatePickerStep('time');
+  const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      if (event.type === 'set' && selectedDate) {
+        if (datePickerStep === 'date') {
+          // Actualizar la fecha y cambiar al paso de hora
+          const newDate = new Date(date);
+          newDate.setFullYear(selectedDate.getFullYear());
+          newDate.setMonth(selectedDate.getMonth());
+          newDate.setDate(selectedDate.getDate());
+          setDate(newDate);
+          setDatePickerStep('time');
+        } else if (datePickerStep === 'time') {
+          // Actualizar la hora y cerrar el picker
+          const newDate = new Date(date);
+          newDate.setHours(selectedDate.getHours());
+          newDate.setMinutes(selectedDate.getMinutes());
+          setDate(newDate);
+          setShowDatePicker(false);
+        }
+      } else if (event.type === 'dismissed') {
+        // Si se cancela, cerrar el picker
+        setShowDatePicker(false);
+      }
+    } else {
+      // En iOS, actualizar la fecha y cerrar el modal
+      if (selectedDate) {
+        setDate(selectedDate);
+      }
+      setShowDateModal(false);
+    }
+  };
+
+  const openDatePicker = () => {
+    if (Platform.OS === 'android') {
+      setDatePickerStep('date');
+      setShowDatePicker(true);
+    } else {
+      setShowDateModal(true);
+    }
   };
 
   const getDateOptions = () => {
@@ -548,30 +781,22 @@ export default function CreateEventScreen() {
 
   // Función para seleccionar imagen de la galería
   const pickImage = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
-      });
+    if (mediaFiles.filter(f => f.type === 'image').length >= 3) {
+      Alert.alert('Solo puedes subir hasta 3 imágenes');
+      return;
+    }
 
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        setImageUri(result.assets[0].uri);
-        // Crear un objeto File a partir de la URI
-        const response = await fetch(result.assets[0].uri);
-        const blob = await response.blob();
-        const file = new File([blob], 'image.jpg', { type: 'image/jpeg' });
-        
-        // Actualizar metadata con la imagen
-        setMetadata(prev => ({
-          ...prev,
-          image_url: result.assets[0].uri,
-        }));
-      }
-    } catch (error) {
-      console.error('Error al seleccionar imagen:', error);
-      Alert.alert('Error', 'No se pudo seleccionar la imagen');
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setMediaFiles(prev => [...prev, {
+        uri: result.assets[0].uri,
+        type: 'image'
+      }]);
     }
   };
 
@@ -584,18 +809,16 @@ export default function CreateEventScreen() {
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
+        allowsEditing: false,
         aspect: [4, 3],
         quality: 1,
       });
 
       if (!result.canceled) {
-        setImageUri(result.assets[0].uri);
-        // Actualizar metadata con la URL de la imagen
-        setMetadata(prev => ({
-          ...prev,
-          image_url: result.assets[0].uri
-        }));
+        setMediaFiles(prev => [...prev, {
+          uri: result.assets[0].uri,
+          type: 'image'
+        }]);
         setShowCamera(false);
       }
     } catch (error) {
@@ -668,17 +891,10 @@ export default function CreateEventScreen() {
       const uri = audioRecording.current.getURI();
       
       if (uri) {
-        setAudioUri(uri);
-        // Crear un objeto File a partir de la URI
-        const response = await fetch(uri);
-        const blob = await response.blob();
-        const file = new File([blob], 'audio.wav', { type: 'audio/wav' });
-        
-        // Actualizar metadata con el audio
-        setMetadata(prev => ({
-          ...prev,
-          audio_url: uri,
-        }));
+        setMediaFiles(prev => [...prev, {
+          uri: uri,
+          type: 'audio'
+        }]);
         
         // Cargar el audio para reproducirlo
         await loadAudioForPlayback(uri);
@@ -778,7 +994,7 @@ export default function CreateEventScreen() {
       audioPlayer.current.unloadAsync();
       audioPlayer.current = null;
     }
-    setAudioUri(null);
+    setMediaFiles(prev => prev.filter(f => f.type !== 'audio'));
     setIsPlayingAudio(false);
     setAudioPosition(0);
     setAudioDuration(0);
@@ -800,7 +1016,10 @@ export default function CreateEventScreen() {
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setVideoUri(result.assets[0].uri);
+        setMediaFiles(prev => [...prev, {
+          uri: result.assets[0].uri,
+          type: 'video'
+        }]);
         setMetadata(prev => ({
           ...prev,
           video_url: result.assets[0].uri
@@ -829,143 +1048,69 @@ export default function CreateEventScreen() {
 
   // Función para seleccionar video de la galería
   const pickVideo = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['videos'],
-        allowsEditing: true,
-        quality: 1,
-      });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        setVideoUri(result.assets[0].uri);
-        // Crear un objeto File a partir de la URI
-        const response = await fetch(result.assets[0].uri);
-        const blob = await response.blob();
-        const file = new File([blob], 'video.mp4', { type: 'video/mp4' });
-        
-        // Actualizar metadata con el video
-        setMetadata(prev => ({
-          ...prev,
-          video_url: result.assets[0].uri,
-        }));
-      }
-    } catch (error) {
-      console.error('Error al seleccionar video:', error);
-      Alert.alert('Error', 'No se pudo seleccionar el video');
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!title || !type || !category) {
-      Alert.alert('Error', 'Por favor completa los campos requeridos');
+    if (mediaFiles.some(f => f.type === 'video')) {
+      Alert.alert('Solo puedes subir un video');
       return;
     }
 
-    // Validar campos requeridos del tipo de evento solo si no es de tipo tiempo
-    if (type !== 'time') {
-      const requiredFields = EVENT_TYPE_FIELDS[type as keyof typeof EVENT_TYPE_FIELDS]?.filter(field => field.required) || [];
-      const missingFields = requiredFields.filter(field => !metadata[field.id]);
-      
-      if (missingFields.length > 0) {
-        Alert.alert('Error', `Por favor completa los campos requeridos: ${missingFields.map(f => f.label).join(', ')}`);
-        return;
-      }
-    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      allowsEditing: true,
+      quality: 1,
+    });
 
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setMediaFiles(prev => [...prev, {
+        uri: result.assets[0].uri,
+        type: 'video'
+      }]);
+      // Crear un objeto File a partir de la URI
+      const response = await fetch(result.assets[0].uri);
+      const blob = await response.blob();
+      const file = new File([blob], 'video.mp4', { type: 'video/mp4' });
+      
+      // Actualizar metadata con el video
+      setMetadata(prev => ({
+        ...prev,
+        video_url: result.assets[0].uri,
+      }));
+    }
+  };
+
+  const removeMedia = (index: number) => {
+    setMediaFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async () => {
     try {
       setIsLoading(true);
-
-      const eventData: CreateEventData = {
+      const eventData = {
         title,
-        description: description.trim() || undefined,
-        type,
-        category,
+        type: 'mixed',
         event_date: date.toISOString(),
-        // No enviar metadata para tipos de medios
+        category: selectedCategories[0] || 'life-diary',
+        media: mediaFiles,
+        description: description.trim() || undefined,
+        ...(selectedJournalId && { shared_journal_id: selectedJournalId }),
       };
-      if (!['video', 'image', 'audio'].includes(type)) {
-        if(type === 'time'){
-          eventData.event_date = date.toISOString();
-        }else{
-          eventData.metadata = { time: date.toISOString() };
-        }
-      }
 
-      // Solo agregar shared_journal_id si se ha seleccionado una bitácora
-      if (useJournal && selectedJournalId) {
-        eventData.shared_journal_id = selectedJournalId;
-      }
-
-      // Agregar archivos según el tipo de evento
-      if (type === 'image' && imageUri) {
-        // Crear el objeto de archivo con la estructura correcta
-        const filename = imageUri.split('/').pop() ?? 'image.jpg';
-        const match = /\.(\w+)$/.exec(filename);
-        const fileType = match ? `image/${match[1]}` : 'image/jpeg';
-        
-        // Convertir la URI a un objeto File
-        const response = await fetch(imageUri);
-        const blob = await response.blob();
-        
-        // Asegurarse de que el tipo MIME sea correcto para imágenes
-        const imageBlob = new Blob([blob], { type: fileType });
-        const file = new File([imageBlob], filename, { type: fileType });
-        
-        eventData.media = [{
-          uri: imageUri,
-          name: filename,
-          type: fileType
-        }];
-      } else if (type === 'audio' && audioUri) {
-        // Crear el objeto de archivo con la estructura correcta
-        const filename = audioUri.split('/').pop() ?? 'audio.wav';
-        const match = /\.(\w+)$/.exec(filename);
-        const fileType = match ? `audio/${match[1]}` : 'audio/wav';
-        
-        // Convertir la URI a un objeto File
-        const response = await fetch(audioUri);
-        const blob = await response.blob();
-        const file = new File([blob], filename, { type: fileType });
-        
-        eventData.media = [{
-          uri: audioUri,
-          name: filename,
-          type: fileType
-        }];
-      } else if (type === 'video' && videoUri) {
-        // Crear el objeto de archivo con la estructura correcta
-        const filename = videoUri.split('/').pop() ?? 'video.mp4';
-        const match = /\.(\w+)$/.exec(filename);
-        const fileType = match ? `video/${match[1]}` : 'video/mp4';
-        
-        // Convertir la URI a un objeto File
-        const response = await fetch(videoUri);
-        const blob = await response.blob();
-        const file = new File([blob], filename, { type: fileType });
-        
-        eventData.media = [{
-          uri: videoUri,
-          name: filename,
-          type: fileType
-        }];
-      }
-
-      console.log('Enviando datos:', eventData);
-      const newEvent = await eventsService.createEvent(eventData);
+      const response = await eventsService.createEvent(eventData);
       
-      if (!newEvent) {
-        throw new Error('No se pudo crear el evento');
+      if (response) {
+        // Navegar al detalle del evento creado
+        router.replace(`/event/${response.id}`);
       }
-
-      Alert.alert('Éxito', 'Evento creado correctamente', [
-        { text: 'OK', onPress: () => router.back() }
-      ]);
     } catch (error) {
-      console.error('Error al crear evento:', error);
-      Alert.alert('Error', 'No se pudo crear el evento');
+      console.error('Error al crear el evento:', error);
+      Alert.alert('Error', 'No se pudo crear el evento. Por favor, intenta de nuevo.');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleCancel = () => {
+    // Navegar al inicio
+    router.replace('/');
   };
 
   const getSelectedTypeLabel = () => {
@@ -1005,17 +1150,10 @@ export default function CreateEventScreen() {
               <View style={styles.mediaOptions}>
                 <TouchableOpacity
                   style={[styles.mediaOption, { backgroundColor: colors.card }]}
-                  onPress={pickImage}
+                  onPress={() => setShowImageModal(true)}
                 >
-                  <Ionicons name="images" size={24} color={colors.text} />
+                  <Ionicons name="images-outline" size={24} color={colors.text} />
                   <Text style={[styles.mediaOptionText, { color: colors.text }]}>Galería</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.mediaOption, { backgroundColor: colors.card }]}
-                  onPress={takePhoto}
-                >
-                  <Ionicons name="camera" size={24} color={colors.text} />
-                  <Text style={[styles.mediaOptionText, { color: colors.text }]}>Tomar Foto</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -1087,12 +1225,29 @@ export default function CreateEventScreen() {
               <View style={styles.mediaOptions}>
                 <TouchableOpacity
                   style={[styles.mediaOption, { backgroundColor: colors.card }]}
-                  onPress={isRecording ? stopAudioRecording : startAudioRecording}
+                  onPress={() => {
+                    Alert.alert(
+                      'Imágenes',
+                      '¿Qué deseas hacer?',
+                      [
+                        {
+                          text: 'Galería',
+                          onPress: pickImage
+                        },
+                        {
+                          text: 'Cámara',
+                          onPress: takePhoto
+                        },
+                        {
+                          text: 'Cancelar',
+                          style: 'cancel'
+                        }
+                      ]
+                    );
+                  }}
                 >
-                  <Ionicons name={isRecording ? "stop-circle" : "mic"} size={24} color={isRecording ? "red" : colors.text} />
-                  <Text style={[styles.mediaOptionText, { color: colors.text }]}>
-                    {isRecording ? `Grabando (${recordingDuration}s)` : 'Grabar Audio WAV'}
-                  </Text>
+                  <Ionicons name="images-outline" size={24} color={colors.text} />
+                  <Text style={[styles.mediaOptionText, { color: colors.text }]}>Galería</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -1139,17 +1294,10 @@ export default function CreateEventScreen() {
               <View style={styles.mediaOptions}>
                 <TouchableOpacity
                   style={[styles.mediaOption, { backgroundColor: colors.card }]}
-                  onPress={pickVideo}
+                  onPress={() => setShowVideoModal(true)}
                 >
-                  <Ionicons name="videocam" size={24} color={colors.text} />
+                  <Ionicons name="videocam-outline" size={24} color={colors.text} />
                   <Text style={[styles.mediaOptionText, { color: colors.text }]}>Galería</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.mediaOption, { backgroundColor: colors.card }]}
-                  onPress={startVideoRecording}
-                >
-                  <Ionicons name="camera" size={24} color={colors.text} />
-                  <Text style={[styles.mediaOptionText, { color: colors.text }]}>Grabar</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -1163,13 +1311,23 @@ export default function CreateEventScreen() {
         <View style={styles.formGroup}>
           <Text style={[styles.label, { color: colors.text }]}>Fecha y Hora *</Text>
           <TouchableOpacity
-            style={[styles.selectButton, { backgroundColor: colors.card }]}
-            onPress={() => setShowDateModal(true)}
+            style={[styles.input, { 
+              backgroundColor: '#FFFFFF',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingHorizontal: 12,
+              borderWidth: 1,
+              borderColor: '#E5E5E5',
+              borderRadius: 8,
+              minHeight: 48,
+            }]}
+            onPress={openDatePicker}
           >
-            <Text style={[styles.selectButtonText, { color: colors.text }]}>
+            <Text style={{ color: '#202024', fontSize: 16 }}>
               {format(date, "EEEE d 'de' MMMM 'de' yyyy, HH:mm", { locale: es })}
             </Text>
-            <Ionicons name="calendar-outline" size={20} color={colors.text} />
+            <Ionicons name="calendar-outline" size={20} color="#666" />
           </TouchableOpacity>
         </View>
       );
@@ -1204,411 +1362,469 @@ export default function CreateEventScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
+      <View style={[
+        styles.header, 
+        Platform.OS === 'ios' && { paddingTop: 48 }
+      ]}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={handleCancel}
         >
           <Ionicons name="arrow-back" size={24} color="#202024" />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: '#202024' }]}>
-          Crear Evento
-        </Text>
+        <TouchableOpacity
+          style={[styles.input, { 
+            backgroundColor: '#FFFFFF',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingHorizontal: 12,
+            borderWidth: 1,
+            borderColor: '#E5E5E5',
+            borderRadius: 8,
+            minHeight: 48,
+            flex: 1,
+            marginHorizontal: 12,
+          }]}
+          onPress={openDatePicker}
+        >
+          <Text style={{ color: '#202024', fontSize: 16 }}>
+            {format(date, "EEEE d 'de' MMMM 'de' yyyy, HH:mm", { locale: es })}
+          </Text>
+          <Ionicons name="calendar-outline" size={20} color="#666" />
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.backButton, { opacity: isLoading ? 0.5 : 1 }]} 
+          onPress={handleSubmit}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#202024" />
+          ) : (
+            <Text style={{ color: '#202024', fontWeight: '600' }}>Guardar</Text>
+          )}
+        </TouchableOpacity>
       </View>
-
-      <ScrollView style={styles.content}>
-        <View style={styles.formGroup}>
-          <Text style={[styles.label, { color: '#202024' }]}>Título *</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: '#e7d3c1', color: '#202024' }]}
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Título del evento"
-            placeholderTextColor="#20202480"
-          />
-        </View>
-
-        {/* Solo mostrar el campo de descripción si el tipo NO es "texto" */}
-        {type !== 'text' && (
-          <View style={styles.formGroup}>
-            <Text style={[styles.label, { color: '#202024' }]}>Descripción</Text>
-            <TextInput
-              style={[styles.input, styles.textArea, { backgroundColor: '#e7d3c1', color: '#202024' }]}
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Descripción del evento (opcional)"
-              placeholderTextColor="#20202480"
-              multiline
-              numberOfLines={4}
-            />
-          </View>
-        )}
-
-        <View style={styles.formGroup}>
-          <Text style={[styles.label, { color: '#202024' }]}>Tipo de Evento *</Text>
-          <TouchableOpacity
-            style={[styles.selectButton, { backgroundColor: '#e7d3c1' }]}
-            onPress={() => setShowTypeModal(true)}
-          >
-            <Text style={[styles.selectButtonText, { color: '#202024' }]}>
-              {getSelectedTypeLabel()}
-            </Text>
-            <Ionicons name="chevron-down" size={20} color="#202024" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={[styles.label, { color: '#202024' }]}>Categoría *</Text>
-          <TouchableOpacity
-            style={[styles.selectButton, { backgroundColor: '#e7d3c1' }]}
-            onPress={() => setShowCategoryModal(true)}
-          >
-            <Text style={[styles.selectButtonText, { color: '#202024' }]}>
-              {getSelectedCategoryLabel()}
-            </Text>
-            <Ionicons name="chevron-down" size={20} color="#202024" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Solo mostrar el campo de fecha y hora si el tipo NO es "tiempo" */}
-        {type !== 'time' && (
-          <View style={styles.formGroup}>
-            <Text style={[styles.label, { color: '#202024' }]}>Fecha y Hora *</Text>
-            <TouchableOpacity
-              style={[styles.selectButton, { backgroundColor: '#e7d3c1' }]}
-              onPress={() => setShowDateModal(true)}
+      
+      <ScrollView 
+        style={[styles.content, { paddingBottom: 20 }]}
+        keyboardShouldPersistTaps="always"
+        keyboardDismissMode="interactive"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={[styles.inputContainer, { marginBottom: 16 }]}>
+          <View style={styles.categorySelector}>
+            <Text style={styles.categoryLabel}>Categoría</Text>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoryScrollContent}
             >
-              <Text style={[styles.selectButtonText, { color: '#202024' }]}>
-                {format(date, "EEEE d 'de' MMMM 'de' yyyy, HH:mm", { locale: es })}
-              </Text>
-              <Ionicons name="calendar-outline" size={20} color="#202024" />
-            </TouchableOpacity>
+              {EVENT_CATEGORIES.map((category) => (
+                <TouchableOpacity
+                  key={category.id}
+                  style={[
+                    styles.categoryButton,
+                    selectedCategories.includes(category.id) && styles.categoryButtonActive
+                  ]}
+                  onPress={() => {
+                    if (selectedCategories.includes(category.id)) {
+                      setSelectedCategories(selectedCategories.filter(id => id !== category.id));
+                    } else {
+                      setSelectedCategories([...selectedCategories, category.id]);
+                    }
+                  }}
+                >
+                  <Ionicons 
+                    name={category.icon as any} 
+                    size={16} 
+                    color={selectedCategories.includes(category.id) ? '#FFFFFF' : '#666'} 
+                  />
+                  <Text 
+                    style={[
+                      styles.categoryButtonText,
+                      selectedCategories.includes(category.id) && styles.categoryButtonTextActive
+                    ]}
+                  >
+                    {category.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
-        )}
 
-        <View style={styles.formGroup}>
-          <View style={styles.switchContainer}>
-            <Text style={[styles.label, { color: '#202024' }]}>Agregar a una bitácora</Text>
-            <Switch
-              value={useJournal}
-              onValueChange={setUseJournal}
-              trackColor={{ false: '#e7d3c1', true: '#e16b5c80' }}
-              thumbColor={useJournal ? '#e16b5c' : '#f4f3f4'}
-            />
-          </View>
-        </View>
-
-        {useJournal && (
-          <View style={styles.formGroup}>
-            <Text style={[styles.label, { color: '#202024' }]}>Seleccionar Bitácora</Text>
-            <View style={styles.journalsContainer}>
+          <View style={styles.journalSelector}>
+            <Text style={styles.journalLabel}>Bitácora (opcional)</Text>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.journalScrollContent}
+            >
               {journals.map((journal) => (
                 <TouchableOpacity
                   key={journal.id}
                   style={[
                     styles.journalButton,
-                    { backgroundColor: '#e7d3c1' },
-                    selectedJournalId === journal.id && { borderColor: '#e16b5c', borderWidth: 2 }
+                    selectedJournalId === journal.id && styles.journalButtonActive
                   ]}
-                  onPress={() => setSelectedJournalId(journal.id)}
+                  onPress={() => {
+                    if (selectedJournalId === journal.id) {
+                      setSelectedJournalId(null);
+                      setUseJournal(false);
+                    } else {
+                      setSelectedJournalId(journal.id);
+                      setUseJournal(true);
+                    }
+                  }}
                 >
-                  <Text style={[styles.journalButtonText, { color: '#202024' }]}>
+                  <Ionicons 
+                    name="book-outline" 
+                    size={16} 
+                    color={selectedJournalId === journal.id ? '#FFFFFF' : '#666'} 
+                  />
+                  <Text 
+                    style={[
+                      styles.journalButtonText,
+                      selectedJournalId === journal.id && styles.journalButtonTextActive
+                    ]}
+                  >
                     {journal.name}
                   </Text>
                 </TouchableOpacity>
               ))}
-            </View>
+            </ScrollView>
           </View>
-        )}
 
-        {/* Campos específicos según el tipo de evento */}
-        {renderTypeSpecificFields()}
+          <TextInput
+            style={[styles.titleInput]}
+            placeholder="¿Qué sucedió?"
+            placeholderTextColor="#999"
+            value={title}
+            onChangeText={setTitle}
+          />
+          
+          <View style={{ height: 1, backgroundColor: '#E5E5E5', marginVertical: 12 }} />
+          
+          <RichTextEditor
+            value={description}
+            onChange={setDescription}
+            placeholder="Describe tu evento..."
+          />
 
-        <TouchableOpacity
-          style={[styles.submitButton, { backgroundColor: '#e16b5c' }]}
-          onPress={handleSubmit}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.submitButtonText}>Crear Evento</Text>
-          )}
-        </TouchableOpacity>
-
-        {/* Modal de selección de tipo */}
-        <Modal
-          visible={showTypeModal}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setShowTypeModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: '#f7f5f2' }]}>
-              <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, { color: '#202024' }]}>Seleccionar Tipo</Text>
-                <TouchableOpacity onPress={() => setShowTypeModal(false)}>
-                  <Ionicons name="close" size={24} color="#202024" />
-                </TouchableOpacity>
+          <View style={[styles.mediaButtonsContainer, { marginTop: 16 }]}>
+            {/* Mostrar solo el audio arriba */}
+            {mediaFiles.some(f => f.type === 'audio') && (
+              <View style={styles.mediaPreviewsContainer}>
+                {mediaFiles.map((file, index) => {
+                  if (file.type === 'audio') {
+                    return (
+                      <View key={index} style={styles.audioPreviewContainer}>
+                        <View style={styles.audioPlayerContainer}>
+                          <TouchableOpacity 
+                            style={styles.audioPlayButton}
+                            onPress={toggleAudioPlayback}
+                          >
+                            <Ionicons 
+                              name={isPlayingAudio ? "pause-circle" : "play-circle"} 
+                              size={32} 
+                              color="#e16b5c" 
+                            />
+                          </TouchableOpacity>
+                          <View style={styles.audioControls}>
+                            <Text style={styles.audioTimeText}>
+                              {formatTime(audioPosition)} / {formatTime(audioDuration)}
+                            </Text>
+                            <View style={styles.audioProgressContainer}>
+                              <View 
+                                style={[
+                                  styles.audioProgress, 
+                                  { width: `${(audioPosition / audioDuration) * 100}%` }
+                                ]} 
+                              />
+                            </View>
+                          </View>
+                          <TouchableOpacity
+                            style={styles.removeButton}
+                            onPress={() => removeMedia(index)}
+                          >
+                            <Ionicons name="close-circle" size={24} color="#FF3B30" />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    );
+                  }
+                  return null;
+                })}
               </View>
-              <ScrollView style={styles.modalOptions}>
-                {EVENT_TYPES.map((eventType) => (
-                  <TouchableOpacity
-                    key={eventType.id}
-                    style={[
-                      styles.modalOption,
-                      { backgroundColor: '#e7d3c1' },
-                      type === eventType.id && { borderColor: '#e16b5c', borderWidth: 2 }
-                    ]}
-                    onPress={() => {
-                      setType(eventType.id);
-                      setShowTypeModal(false);
-                    }}
-                  >
-                    <Ionicons 
-                      name={eventType.icon as any} 
-                      size={24} 
-                      color={type === eventType.id ? '#e16b5c' : '#202024'} 
-                    />
-                    <Text 
-                      style={[
-                        styles.modalOptionText, 
-                        { color: type === eventType.id ? '#e16b5c' : '#202024' }
-                      ]}
-                    >
-                      {eventType.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          </View>
-        </Modal>
+            )}
 
-        {/* Modal de selección de categoría */}
-        <Modal
-          visible={showCategoryModal}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setShowCategoryModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: '#f7f5f2' }]}>
-              <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, { color: '#202024' }]}>Seleccionar Categoría</Text>
-                <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
-                  <Ionicons name="close" size={24} color="#202024" />
-                </TouchableOpacity>
+            <View style={styles.mediaButtons}>
+              <TouchableOpacity 
+                style={[
+                  styles.mediaButton,
+                  mediaFiles.some(f => f.type === 'image') && styles.mediaButtonActive
+                ]} 
+                onPress={() => setShowImageModal(true)}
+              >
+                <Ionicons 
+                  name="images" 
+                  size={20} 
+                  color={mediaFiles.some(f => f.type === 'image') ? '#e16b5c' : '#666'} 
+                />
+                <Text style={styles.mediaButtonText}>Imágenes</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[
+                  styles.mediaButton,
+                  mediaFiles.some(f => f.type === 'video') && styles.mediaButtonActive
+                ]} 
+                onPress={() => setShowVideoModal(true)}
+              >
+                <Ionicons 
+                  name="videocam" 
+                  size={20} 
+                  color={mediaFiles.some(f => f.type === 'video') ? '#e16b5c' : '#666'} 
+                />
+                <Text style={styles.mediaButtonText}>Video</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[
+                  styles.mediaButton,
+                  isRecording && styles.mediaButtonActive
+                ]} 
+                onPress={isRecording ? stopAudioRecording : startAudioRecording}
+              >
+                <Ionicons 
+                  name={isRecording ? "stop-circle" : "mic"} 
+                  size={20} 
+                  color={isRecording ? '#e16b5c' : '#666'} 
+                />
+                <Text style={styles.mediaButtonText}>
+                  {isRecording ? 'Detener' : 'Audio'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {isRecording && (
+              <View style={styles.recordingIndicator}>
+                <Ionicons name="radio-button-on" size={16} color="#FF3B30" />
+                <Text style={styles.recordingText}>
+                  Grabando ({recordingDuration}s)
+                </Text>
               </View>
-              <ScrollView style={styles.modalOptions}>
-                {EVENT_CATEGORIES.map((eventCategory) => (
-                  <TouchableOpacity
-                    key={eventCategory.id}
-                    style={[
-                      styles.modalOption,
-                      { backgroundColor: '#e7d3c1' },
-                      category === eventCategory.id && { borderColor: '#e16b5c', borderWidth: 2 }
-                    ]}
-                    onPress={() => {
-                      setCategory(eventCategory.id);
-                      setShowCategoryModal(false);
-                    }}
-                  >
-                    <Ionicons 
-                      name={eventCategory.icon as any} 
-                      size={24} 
-                      color={category === eventCategory.id ? '#e16b5c' : '#202024'} 
-                    />
-                    <Text 
-                      style={[
-                        styles.modalOptionText, 
-                        { color: category === eventCategory.id ? '#e16b5c' : '#202024' }
-                      ]}
-                    >
-                      {eventCategory.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          </View>
-        </Modal>
+            )}
 
-        {/* Modal de selección de fecha y hora */}
+            {/* Mostrar imágenes y videos debajo de los botones */}
+            {(mediaFiles.some(f => f.type === 'image') || mediaFiles.some(f => f.type === 'video')) && (
+              <View style={styles.mediaPreviewsContainer}>
+                <View style={styles.mediaPreviewGrid}>
+                  {mediaFiles.map((file, index) => {
+                    if (file.type === 'image') {
+                      return (
+                        <View key={index} style={styles.mediaPreviewItem}>
+                          <Image 
+                            source={{ uri: file.uri }} 
+                            style={styles.mediaPreview}
+                          />
+                          <TouchableOpacity
+                            style={styles.removeButton}
+                            onPress={() => removeMedia(index)}
+                          >
+                            <Ionicons name="close-circle" size={24} color="#FF3B30" />
+                          </TouchableOpacity>
+                        </View>
+                      );
+                    }
+
+                    if (file.type === 'video') {
+                      return (
+                        <View key={index} style={styles.mediaPreviewItem}>
+                          <Video
+                            source={{ uri: file.uri }}
+                            style={styles.mediaPreview}
+                            useNativeControls
+                            resizeMode={ResizeMode.COVER}
+                          />
+                          <TouchableOpacity
+                            style={styles.removeButton}
+                            onPress={() => removeMedia(index)}
+                          >
+                            <Ionicons name="close-circle" size={24} color="#FF3B30" />
+                          </TouchableOpacity>
+                        </View>
+                      );
+                    }
+                    return null;
+                  })}
+                </View>
+              </View>
+            )}
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Reemplazar el modal por el picker directo */}
+      {Platform.OS === 'android' && showDatePicker && (
+        <CustomDateTimePicker
+          value={date}
+          onChange={handleDateChange}
+          show={showDatePicker}
+          mode={datePickerStep}
+        />
+      )}
+
+      {/* Mantener el modal solo para iOS */}
+      {Platform.OS === 'ios' && showDateModal && (
         <Modal
           visible={showDateModal}
-          transparent
+          transparent={true}
           animationType="slide"
-          onRequestClose={handleDatePickerClose}
+          onRequestClose={() => setShowDateModal(false)}
         >
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: '#f7f5f2' }]}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, { color: '#202024' }]}>
-                  {datePickerStep === 'date' ? 'Seleccionar Fecha' : 'Seleccionar Hora'}
-                </Text>
-                <TouchableOpacity onPress={handleDatePickerClose}>
-                  <Ionicons name="close" size={24} color="#202024" />
+                <Text style={styles.modalTitle}>Seleccionar Fecha y Hora</Text>
+                <TouchableOpacity onPress={() => setShowDateModal(false)}>
+                  <Text style={styles.modalCloseButton}>×</Text>
                 </TouchableOpacity>
               </View>
-
-              {datePickerStep === 'date' ? (
-                <View style={styles.datePickerContainer}>
-                  <View style={styles.datePickerHeader}>
-                    <Text style={[styles.datePickerTitle, { color: '#202024' }]}>
-                      {format(date, "MMMM yyyy", { locale: es })}
-                    </Text>
-                    <View style={styles.datePickerControls}>
-                      <TouchableOpacity
-                        onPress={() => {
-                          const newDate = new Date(date);
-                          newDate.setMonth(newDate.getMonth() - 1);
-                          setDate(newDate);
-                        }}
-                      >
-                        <Ionicons name="chevron-back" size={24} color="#202024" />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => {
-                          const newDate = new Date(date);
-                          newDate.setMonth(newDate.getMonth() + 1);
-                          setDate(newDate);
-                        }}
-                      >
-                        <Ionicons name="chevron-forward" size={24} color="#202024" />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-
-                  <View style={styles.calendarGrid}>
-                    {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map((day) => (
-                      <Text key={day} style={[styles.calendarDayHeader, { color: '#202024' }]}>
-                        {day}
-                      </Text>
-                    ))}
-                    {Array.from({ length: 42 }, (_, i) => {
-                      const currentDate = new Date(date.getFullYear(), date.getMonth(), 1);
-                      const firstDay = currentDate.getDay();
-                      const day = i - firstDay + 1;
-                      const isCurrentMonth = day > 0 && day <= new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-                      const isSelected = isCurrentMonth && day === date.getDate();
-                      const isToday = isCurrentMonth && day === new Date().getDate() && 
-                                    date.getMonth() === new Date().getMonth() && 
-                                    date.getFullYear() === new Date().getFullYear();
-
-                      return (
-                        <TouchableOpacity
-                          key={i}
-                          style={[
-                            styles.calendarDay,
-                            isSelected && { backgroundColor: '#e16b5c' },
-                            isToday && !isSelected && { borderColor: '#e16b5c', borderWidth: 1 }
-                          ]}
-                          onPress={() => {
-                            if (isCurrentMonth) {
-                              const newDate = new Date(date);
-                              newDate.setDate(day);
-                              setDate(newDate);
-                            }
-                          }}
-                        >
-                          <Text
-                            style={[
-                              styles.calendarDayText,
-                              { color: isCurrentMonth ? '#202024' : '#20202440' },
-                              isSelected && { color: '#FFFFFF' }
-                            ]}
-                          >
-                            {isCurrentMonth ? day : ''}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-
-                  <TouchableOpacity
-                    style={[styles.nextButton, { backgroundColor: '#e16b5c' }]}
-                    onPress={() => setDatePickerStep('time')}
-                  >
-                    <Text style={styles.nextButtonText}>Siguiente</Text>
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <View style={styles.timePickerContainer}>
-                  <View style={styles.timePickerControls}>
-                    <View style={styles.timePickerColumn}>
-                      <Text style={[styles.timePickerLabel, { color: '#202024' }]}>Hora</Text>
-                      <ScrollView style={styles.timePickerScroll}>
-                        {Array.from({ length: 24 }, (_, i) => (
-                          <TouchableOpacity
-                            key={i}
-                            style={[
-                              styles.timePickerOption,
-                              date.getHours() === i && { backgroundColor: '#e16b5c' }
-                            ]}
-                            onPress={() => handleTimeChange(i, date.getMinutes())}
-                          >
-                            <Text
-                              style={[
-                                styles.timePickerOptionText,
-                                { color: '#202024' },
-                                date.getHours() === i && { color: '#FFFFFF' }
-                              ]}
-                            >
-                              {i.toString().padStart(2, '0')}:00
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
-                    </View>
-                    <View style={styles.timePickerColumn}>
-                      <Text style={[styles.timePickerLabel, { color: '#202024' }]}>Minutos</Text>
-                      <ScrollView style={styles.timePickerScroll}>
-                        {Array.from({ length: 12 }, (_, i) => (
-                          <TouchableOpacity
-                            key={i}
-                            style={[
-                              styles.timePickerOption,
-                              date.getMinutes() === i * 5 && { backgroundColor: '#e16b5c' }
-                            ]}
-                            onPress={() => handleTimeChange(date.getHours(), i * 5)}
-                          >
-                            <Text
-                              style={[
-                                styles.timePickerOptionText,
-                                { color: '#202024' },
-                                date.getMinutes() === i * 5 && { color: '#FFFFFF' }
-                              ]}
-                            >
-                              {(i * 5).toString().padStart(2, '0')}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
-                    </View>
-                  </View>
-
-                  <View style={styles.timePickerActions}>
-                    <TouchableOpacity
-                      style={[styles.datePickerBackButton, { backgroundColor: '#e7d3c1' }]}
-                      onPress={() => setDatePickerStep('date')}
-                    >
-                      <Text style={[styles.datePickerBackButtonText, { color: '#202024' }]}>Atrás</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.confirmButton, { backgroundColor: '#e16b5c' }]}
-                      onPress={handleDatePickerClose}
-                    >
-                      <Text style={styles.confirmButtonText}>Confirmar</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              )}
+              <CustomDateTimePicker
+                value={date}
+                onChange={handleDateChange}
+                show={showDateModal}
+              />
             </View>
           </View>
         </Modal>
-      </ScrollView>
-    </SafeAreaView>
+      )}
+
+      <Modal
+        visible={showImageModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowImageModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Imágenes</Text>
+            <View style={styles.modalOptions}>
+              <TouchableOpacity 
+                style={styles.modalOption}
+                onPress={() => {
+                  setShowImageModal(false);
+                  pickImage();
+                }}
+              >
+                <Ionicons name="images-outline" size={24} color="#666" />
+                <Text style={styles.modalOptionText}>Galería</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.modalOption}
+                onPress={() => {
+                  setShowImageModal(false);
+                  takePhoto();
+                }}
+              >
+                <Ionicons name="camera-outline" size={24} color="#666" />
+                <Text style={styles.modalOptionText}>Cámara</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity 
+              style={styles.modalCancelButton}
+              onPress={() => setShowImageModal(false)}
+            >
+              <Text style={styles.modalCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showVideoModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowVideoModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Video</Text>
+            <View style={styles.modalOptions}>
+              <TouchableOpacity 
+                style={styles.modalOption}
+                onPress={() => {
+                  setShowVideoModal(false);
+                  pickVideo();
+                }}
+              >
+                <Ionicons name="videocam-outline" size={24} color="#666" />
+                <Text style={styles.modalOptionText}>Galería</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.modalOption}
+                onPress={() => {
+                  setShowVideoModal(false);
+                  startVideoRecording();
+                }}
+              >
+                <Ionicons name="recording-outline" size={24} color="#666" />
+                <Text style={styles.modalOptionText}>Grabar</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity 
+              style={styles.modalCancelButton}
+              onPress={() => setShowVideoModal(false)}
+            >
+              <Text style={styles.modalCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showJournalModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowJournalModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Seleccionar Bitácora</Text>
+            <ScrollView style={styles.journalList}>
+              {journals.map((journal) => (
+                <TouchableOpacity
+                  key={journal.id}
+                  style={[
+                    styles.journalItem,
+                    selectedJournalId === journal.id && styles.journalItemActive
+                  ]}
+                  onPress={() => {
+                    setSelectedJournalId(journal.id);
+                    setUseJournal(true);
+                    setShowJournalModal(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.journalItemText,
+                    selectedJournalId === journal.id && styles.journalItemTextActive
+                  ]}>
+                    {journal.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity 
+              style={styles.modalCancelButton}
+              onPress={() => setShowJournalModal(false)}
+            >
+              <Text style={styles.modalCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 } 

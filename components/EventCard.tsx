@@ -52,7 +52,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onPress }) => {
 
   return (
     <TouchableOpacity 
-      style={[styles.eventItem, { backgroundColor: '#e7d3c1' }]}
+      style={[styles.eventItem, { backgroundColor: '#ffffff' }]}
       onPress={() => onPress(event.id)}
     >
       <View style={styles.dateContainer}>
@@ -102,6 +102,14 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onPress }) => {
                 <Ionicons name="person" size={12} color="#202024" />
                 <Text style={[styles.badgeText, { color: '#202024' }]}>
                   {event.user.name}
+                </Text>
+              </View>
+            )}
+            {event.media && event.media.length > 0 && (
+              <View style={[styles.badge, styles.mediaBadge]}>
+                <Ionicons name="albums" size={12} color="#6177c2" />
+                <Text style={[styles.badgeText, { color: '#6177c2' }]}>
+                  Multimedia
                 </Text>
               </View>
             )}
@@ -183,5 +191,8 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 12,
     fontWeight: '500',
+  },
+  mediaBadge: {
+    backgroundColor: '#E8EEFF',
   },
 }); 

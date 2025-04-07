@@ -134,9 +134,10 @@ export const eventsService = {
       if (hasMedia) {
         // Si hay archivos, usar FormData
         const formData = new FormData();
-        
+        console.log('data', data);
         // Agregar campos básicos
         formData.append('title', data.title);
+        formData.append('description', data.description || '');
         formData.append('type', data.type);
         formData.append('category', data.category);
         formData.append('event_date', data.event_date);
@@ -173,6 +174,7 @@ export const eventsService = {
         headers['content-type'] = 'application/json';
         requestData = {
           title: data.title,
+          description: data.description || '',
           type: data.type,
           category: data.category,
           event_date: data.event_date,
