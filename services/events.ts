@@ -195,9 +195,70 @@ export const eventsService = {
       });
       
       return response.data.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al crear Registro:', error);
-      return null;
+      // Propagar el mensaje de error del backend si está disponible
+      if (error.response && error.response.data && error.response.data.message) {
+        throw new Error(error.response.data.message);
+      } else if (error.message) {
+        throw new Error(error.message);
+      } else {
+        throw new Error('Error desconocido al crear el Registro');
+      }
+    }
+  },
+
+  // Actualizar un Registro existente
+  updateEvent: async (id: string, data: FormData): Promise<Event | null> => {
+    try {
+      // Obtener la zona horaria del dispositivo
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
+      // Determinar si hay archivos para enviar
+      const hasMedia = data.has('media[]');
+      
+      // Preparar los datos según el tipo de Registro
+      let requestData;
+      let headers: Record<string, string> = {
+        'Accept': 'application/json',
+      };
+      
+      if (hasMedia) {
+        // Si hay archivos, usar FormData
+        requestData = data;
+        headers['content-type'] = 'multipart/form-data';
+      } else {
+        // Si no hay archivos, enviar como JSON
+        headers['content-type'] = 'application/json';
+        requestData = {
+          title: data.get('title'),
+          description: data.get('description') || '',
+          type: data.get('type'),
+          category: data.get('category'),
+          event_date: data.get('event_date'),
+          shared_journal_id: data.get('shared_journal_id'),
+          metadata: data.get('metadata') ? JSON.parse(data.get('metadata') as string) : {},
+          timezone: timezone,
+          deleted_media_ids: data.get('deleted_media_ids') ? JSON.parse(data.get('deleted_media_ids') as string) : []
+        };
+      }
+      
+      const response = await api.post<ApiResponse<Event>>(`/api/events/${id}`, requestData, {
+        headers,
+        validateStatus: (status: number) => status === 200 || status === 201,
+      });
+      
+      return response.data.data;
+    } catch (error: any) {
+      console.error('Error al actualizar Registro:', error);
+      // Propagar el mensaje de error del backend si está disponible
+      if (error.response && error.response.data && error.response.data.message) {
+        throw new Error(error.response.data.message);
+      } else if (error.message) {
+        throw new Error(error.message);
+      } else {
+        throw new Error('Error desconocido al actualizar el Registro');
+      }
     }
   },
 
@@ -210,5 +271,19 @@ export const eventsService = {
       console.error('Error al obtener Registros sugeridos:', error);
       return { frequent: [], predefined: [] };
     }
+  },
+
+  // Eliminar un medio de un evento
+  deleteEventMedia: async (eventId: string, mediaId: string): Promise<boolean> => {
+    try {
+      console.log('eventId', eventId);
+      console.log('mediaId', mediaId);
+      await api.delete(`/api/events/${eventId}/media/${mediaId}`);
+      return true;
+    } catch (error) {
+      console.error('Error al eliminar el medio:', error);
+      throw error;
+    }
+    return false;
   },
 }; 

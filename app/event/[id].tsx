@@ -329,6 +329,14 @@ const EventDetail = () => {
         <TouchableOpacity style={styles.iconButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={20} color="#000" />
         </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.editButton} 
+          onPress={() => router.push(`/edit-event/${id}`)}
+        >
+          <Ionicons name="create-outline" size={20} color="#000" />
+          <Text style={styles.editButtonText}>Editar</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scrollContent}>
@@ -703,6 +711,19 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "500",
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  editButtonText: {
+    marginLeft: 4,
+    fontSize: 14,
+    color: '#000',
   },
 })
 

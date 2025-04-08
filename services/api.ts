@@ -41,8 +41,10 @@ api.interceptors.response.use(
     return response;
   },
   async function(error) {
+    console.log(error);
     if (error.response) {
-      console.log('Error de respuesta:', error.response);
+      console.log('Error de respuesta:', error
+      );
       // El servidor respondió con un código de estado fuera del rango 2xx
       switch (error.response.status) {
         case 401:
@@ -68,7 +70,8 @@ api.interceptors.response.use(
           console.error('Error en la petición:', error.response.data);
       }
     } else if (error.request) {
-      console.log('Error de solicitud:', error.request);
+      console.log(error);
+      console.log('Error de solicitud:', error);
       // La petición fue hecha pero no se recibió respuesta
       console.error('No se pudo conectar con el servidor');
     } else {
