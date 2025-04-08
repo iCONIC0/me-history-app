@@ -1084,22 +1084,62 @@ export default function CreateEventScreen() {
   const handleSubmit = async () => {
     try {
       setIsLoading(true);
-      const eventData = {
+      const eventData: CreateEventData = {
         title,
         type: 'mixed',
         event_date: date.toISOString(),
         category: selectedCategories[0] || 'life-diary',
-        media: mediaFiles,
         description: description.trim() || undefined,
-        ...(selectedJournalId && { shared_journal_id: selectedJournalId }),
       };
 
-      const response = await eventsService.createEvent(eventData);
-      
-      if (response) {
-        // Navegar al detalle del evento creado
-        router.replace(`/event/${response.id}`);
+      // No enviar metadata para tipos de medios
+      if (!['video', 'image', 'audio'].includes(type)) {
+        if(type === 'time'){
+          eventData.event_date = date.toISOString();
+        }else{
+          eventData.metadata = { time: date.toISOString() };
+        }
       }
+
+      // Solo agregar shared_journal_id si se ha seleccionado una bitácora
+      if (useJournal && selectedJournalId) {
+        eventData.shared_journal_id = selectedJournalId;
+      }
+
+      // Procesar los archivos multimedia
+      if (mediaFiles.length > 0) {
+        const processedFiles = await Promise.all(mediaFiles.map(async (file) => {
+          // Obtener el nombre del archivo y su extensión
+          const filename = file.uri.split('/').pop() ?? `${file.type}.${file.type === 'image' ? 'jpg' : file.type === 'video' ? 'mp4' : 'wav'}`;
+          const match = /\.(\w+)$/.exec(filename);
+          const fileType = match ? `${file.type}/${match[1]}` : `${file.type}/${file.type === 'image' ? 'jpeg' : file.type === 'video' ? 'mp4' : 'wav'}`;
+          
+          // Convertir la URI a un objeto File
+          const response = await fetch(file.uri);
+          const blob = await response.blob();
+          const fileObj = new File([blob], filename, { type: fileType });
+          
+          return {
+            uri: file.uri,
+            name: filename,
+            type: fileType
+          };
+        }));
+
+        eventData.media = processedFiles;
+      }
+
+      console.log('Enviando datos:', eventData);
+      const newEvent = await eventsService.createEvent(eventData);
+      
+      if (!newEvent) {
+        throw new Error('No se pudo crear el evento');
+      }
+
+      Alert.alert('Éxito', 'Evento creado correctamente', [
+        { text: 'OK', onPress: () => router.back() }
+      ]);
+
     } catch (error) {
       console.error('Error al crear el evento:', error);
       Alert.alert('Error', 'No se pudo crear el evento. Por favor, intenta de nuevo.');
