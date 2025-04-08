@@ -7,6 +7,7 @@ export interface Mood {
   createdAt: string;
   updatedAt: string;
 }
+
 interface ApiResponse<T> {
   success: boolean;
   data: T;
@@ -15,9 +16,10 @@ interface ApiResponse<T> {
 
 export const moods = {
   // Obtener todos los estados de ánimo
-  getAll: async (): Promise<Mood[]> => {
-    const response = await api.get<Mood[]>('/api/me/moods');
-    return response.data;
+  getAll: async (month?: string): Promise<Mood[]> => {
+    const url = month ? `/api/me/moods?month=${month}` : '/api/me/moods';
+    const response = await api.get<ApiResponse<Mood[]>>(url);
+    return response.data.data;
   },
 
   // Crear un nuevo estado de ánimo
@@ -26,6 +28,6 @@ export const moods = {
       mood,
       date: date.toISOString(),
     });
-    return response.data;
+    return response.data.data;
   },
 }; 

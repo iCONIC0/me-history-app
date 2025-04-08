@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Platform, 
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { moods } from '../services/moods';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 interface MoodOption {
   id: string;
@@ -137,7 +138,15 @@ export const MoodSelector = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>¿Cómo te sientes?</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>¿Cómo te sientes?</Text>
+        <TouchableOpacity
+          style={styles.viewAllButton}
+          onPress={() => router.push('/moods')}
+        >
+          <Text style={styles.viewAllButtonText}>Ver todos</Text>
+        </TouchableOpacity>
+      </View>
       
       {Platform.OS === 'android' && androidStep === 'mood' && (
         <ScrollView 
@@ -287,11 +296,26 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 16,
     color: '#202024',
+  },
+  viewAllButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#f4f4f5',
+    borderRadius: 16,
+  },
+  viewAllButtonText: {
+    fontSize: 14,
+    color: '#666',
   },
   scrollContent: {
     paddingRight: 16,

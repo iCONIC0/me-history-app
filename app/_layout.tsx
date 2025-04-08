@@ -45,6 +45,9 @@ export default function RootLayout() {
     } else if (currentPath.startsWith('profile/')) {
       setShowHeader(false);
       setShowBackButton(false);
+    } else if (currentPath === 'moods') {
+      setShowHeader(false);
+      setShowBackButton(false);
     } else {
       setShowHeader(true);
       setShowBackButton(false);
