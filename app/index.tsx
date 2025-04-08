@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, FlatList, Modal } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { eventsService, Event } from '../services/events';
 import { journalsService, Journal } from '../services/journals';
 import { useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { EventCard } from '../components/EventCard';
+import { MoodSelector } from '../components/MoodSelector';
 
 // Tipos de eventos disponibles
 const EVENT_TYPES = [
@@ -249,81 +250,90 @@ export default function HomeScreen() {
   const groupedEvents = groupEventsByMonth(events);
 
   return (
-    <View style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+      <Stack.Screen
+        options={{
+          title: 'Me History',
+          headerLargeTitle: true,
+        }}
+      />
       <ScrollView>
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: '#202024' }]}>
-              Eventos Recientes
-            </Text>
-          </View>
-          
-          {groupedEvents?.length > 0 ? (
-            <View>
-              {groupedEvents.map((monthGroup) => (
-                <View key={monthGroup.title} style={styles.monthSection}>
-                  <View style={styles.monthHeader}>
-                    <Text style={styles.monthTitle}>{monthGroup.title}</Text>
-                    <TouchableOpacity
-                      style={styles.viewAllButton}
-                      onPress={() => router.push('/events')}
-                    >
-                      <Text style={styles.viewAllButtonText}>Ver todos</Text>
-                    </TouchableOpacity>
-                  </View>
-                  {monthGroup.data.map((event) => (
-                    <View key={event.id} style={styles.eventWrapper}>
-                      {renderEventItem({ item: event })}
+        <MoodSelector />
+        <View style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: '#202024' }]}>
+                Eventos Recientes
+              </Text>
+            </View>
+            
+            {groupedEvents?.length > 0 ? (
+              <View>
+                {groupedEvents.map((monthGroup) => (
+                  <View key={monthGroup.title} style={styles.monthSection}>
+                    <View style={styles.monthHeader}>
+                      <Text style={styles.monthTitle}>{monthGroup.title}</Text>
+                      <TouchableOpacity
+                        style={styles.viewAllButton}
+                        onPress={() => router.push('/events')}
+                      >
+                        <Text style={styles.viewAllButtonText}>Ver todos</Text>
+                      </TouchableOpacity>
                     </View>
-                  ))}
-                </View>
-              ))}
-            </View>
-          ) : (
-            <View style={styles.emptyState}>
-              <Ionicons name="calendar-outline" size={48} color="#202024" />
-              <Text style={[styles.emptyStateText, { color: '#202024' }]}>
-                No hay eventos recientes
-              </Text>
-              <Text style={[styles.emptyStateSubtext, { color: '#202024' }]}>
-                Registra un evento para comenzar
-              </Text>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: '#202024' }]}>
-              Mis Bitácoras
-            </Text>
-            <TouchableOpacity
-              style={styles.viewAllButton}
-              onPress={() => router.push('/shared-journals')}
-            >
-              <Text style={styles.viewAllButtonText}>Ver todas</Text>
-            </TouchableOpacity>
+                    {monthGroup.data.map((event) => (
+                      <View key={event.id} style={styles.eventWrapper}>
+                        {renderEventItem({ item: event })}
+                      </View>
+                    ))}
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.emptyState}>
+                <Ionicons name="calendar-outline" size={48} color="#202024" />
+                <Text style={[styles.emptyStateText, { color: '#202024' }]}>
+                  No hay eventos recientes
+                </Text>
+                <Text style={[styles.emptyStateSubtext, { color: '#202024' }]}>
+                  Registra un evento para comenzar
+                </Text>
+              </View>
+            )}
           </View>
-          
-          {recentJournals.length > 0 ? (
-            <View>
-              {recentJournals.map((journal) => (
-                <View key={journal.id} style={styles.journalWrapper}>
-                  {renderJournalItem({ item: journal })}
-                </View>
-              ))}
-            </View>
-          ) : (
-            <View style={styles.emptyState}>
-              <Ionicons name="book-outline" size={48} color="#202024" />
-              <Text style={[styles.emptyStateText, { color: '#202024' }]}>
-                No tienes bitácoras
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: '#202024' }]}>
+                Mis Bitácoras
               </Text>
-              <Text style={[styles.emptyStateSubtext, { color: '#202024' }]}>
-                Crea una bitácora para comenzar
-              </Text>
+              <TouchableOpacity
+                style={styles.viewAllButton}
+                onPress={() => router.push('/shared-journals')}
+              >
+                <Text style={styles.viewAllButtonText}>Ver todas</Text>
+              </TouchableOpacity>
             </View>
-          )}
+            
+            {recentJournals.length > 0 ? (
+              <View>
+                {recentJournals.map((journal) => (
+                  <View key={journal.id} style={styles.journalWrapper}>
+                    {renderJournalItem({ item: journal })}
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.emptyState}>
+                <Ionicons name="book-outline" size={48} color="#202024" />
+                <Text style={[styles.emptyStateText, { color: '#202024' }]}>
+                  No tienes bitácoras
+                </Text>
+                <Text style={[styles.emptyStateSubtext, { color: '#202024' }]}>
+                  Crea una bitácora para comenzar
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
       </ScrollView>
 
@@ -342,6 +352,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingHorizontal: 16,
   },
   header: {
     padding: 20,
@@ -356,13 +367,13 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   section: {
-    padding: 20,
+    marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   sectionTitle: {
     fontSize: 20,
@@ -589,5 +600,11 @@ const styles = StyleSheet.create({
   },
   journalWrapper: {
     marginBottom: 8,
+  },
+  addButton: {
+    backgroundColor: '#8b5cf6',
+    padding: 12,
+    borderRadius: 16,
+    marginLeft: 12,
   },
 }); 
