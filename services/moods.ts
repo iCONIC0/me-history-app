@@ -1,34 +1,48 @@
 import api from './api';
 
 export interface Mood {
-  id: string;
-  date: string;
+  id: number;
   mood: string;
-  createdAt: string;
-  updatedAt: string;
+  date: string;
+  created_at: string;
+  updated_at: string;
 }
 
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message?: string;
+export interface ApiResponse {
+  data: Mood[];
 }
 
-export const moods = {
-  // Obtener todos los estados de ánimo
-  getAll: async (month?: string): Promise<Mood[]> => {
-    const url = month ? `/api/me/moods?month=${month}` : '/api/me/moods';
-    const response = await api.get<ApiResponse<Mood[]>>(url);
-    return response.data.data;
-  },
+class MoodsService {
+  async getAll(month?: string): Promise<Record<string, Mood[]>> {
+    try {
+      const url = month ? `/api/me/moods?month=${month}` : '/api/me/moods';
+      const response = await api.get<ApiResponse>(url);
+      return response.data.data;
+    } catch (error) {
+      console.error('Error al obtener los estados de ánimo:', error);
+      return {};
+    }
+  }
 
-  // Crear un nuevo estado de ánimo
-  create: async (mood: string, date: Date): Promise<Mood> => {
-    const formattedDate = date.toISOString().slice(0, 19).replace('T', ' ');
-    const response = await api.post<ApiResponse<Mood>>('/api/me/moods', {
-      mood,
-      date: formattedDate,
-    });
-    return response.data.data;
-  },
-}; 
+  async create(mood: string, date: Date): Promise<Mood | null> {
+    try {
+      // Obtener la zona horaria del dispositivo
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
+      // Enviar la fecha en UTC
+      const utcDate = date.toISOString().slice(0, 19).replace('T', ' ');
+
+      const response = await api.post<ApiResponse>('/api/me/moods', {
+        mood,
+        date: utcDate,
+        timezone
+      });
+      return response.data.data[0];
+    } catch (error) {
+      console.error('Error al crear el estado de ánimo:', error);
+      return null;
+    }
+  }
+}
+
+export const moods = new MoodsService(); 

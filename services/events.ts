@@ -51,6 +51,7 @@ export interface CreateEventData {
     type: string;
   }[];
   metadata?: Record<string, any>;
+  timezone?: string;
 }
 
 interface ApiResponse<T> {
@@ -122,6 +123,9 @@ export const eventsService = {
   // Crear un nuevo evento
   createEvent: async (data: CreateEventData): Promise<Event | null> => {
     try {
+      // Obtener la zona horaria del dispositivo
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
       // Determinar si hay archivos para enviar
       const hasMedia = data.media && data.media.length > 0;
       
@@ -141,6 +145,7 @@ export const eventsService = {
         formData.append('type', data.type);
         formData.append('category', data.category);
         formData.append('event_date', data.event_date);
+        formData.append('timezone', timezone);
         
         // Agregar shared_journal_id si existe
         if (data.shared_journal_id) {
@@ -180,6 +185,7 @@ export const eventsService = {
           event_date: data.event_date,
           shared_journal_id: data.shared_journal_id,
           metadata: data.metadata || {},
+          timezone: timezone
         };
       }
       
@@ -198,10 +204,10 @@ export const eventsService = {
   // Obtener sugerencias de eventos
   getSuggestedEvents: async (): Promise<SuggestedEventsResponse> => {
     try {
-      const response = await api.get<ApiResponse<SuggestedEventsResponse>>('/api/suggested-events');
+      const response = await api.get<ApiResponse<SuggestedEventsResponse>>('/api/events/suggested');
       return response.data.data;
     } catch (error) {
-      console.error('Error al obtener sugerencias:', error);
+      console.error('Error al obtener eventos sugeridos:', error);
       return { frequent: [], predefined: [] };
     }
   },
