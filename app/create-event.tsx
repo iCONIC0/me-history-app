@@ -32,7 +32,7 @@ import { Video, ResizeMode } from 'expo-av';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { RichTextEditor } from '../components/RichTextEditor';
 
-// Tipos de eventos disponibles
+// Tipos de Registros disponibles
 const EVENT_TYPES = [
   { id: 'text', icon: 'text', label: 'Texto' },
   { id: 'image', icon: 'image', label: 'Imagen' },
@@ -64,7 +64,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   'dating': 'Citas',
   'eat': 'Comida',
 };
-// Categorías de eventos disponibles
+// Categorías de Registros disponibles
 const EVENT_CATEGORIES = [
   { id: 'life-diary', icon: 'book', label: 'Diario' },
   { id: 'health', icon: 'medical', label: 'Salud' },
@@ -75,7 +75,7 @@ const EVENT_CATEGORIES = [
   { id: 'eat', icon: 'restaurant', label: 'Comida' },
 ];
 
-// Definición de campos adicionales por tipo de evento
+// Definición de campos adicionales por tipo de Registro
 const EVENT_TYPE_FIELDS = {
   text: [
     { id: 'content', label: 'Contenido', type: 'textarea', required: true },
@@ -1134,16 +1134,16 @@ export default function CreateEventScreen() {
       const newEvent = await eventsService.createEvent(eventData);
       
       if (!newEvent) {
-        throw new Error('No se pudo crear el evento');
+        throw new Error('No se pudo crear el Registro');
       }
 
-      Alert.alert('Éxito', 'Evento creado correctamente', [
+      Alert.alert('Éxito', 'Registro creado correctamente', [
         { text: 'OK', onPress: () => router.back() }
       ]);
 
     } catch (error) {
-      console.error('Error al crear el evento:', error);
-      Alert.alert('Error', 'No se pudo crear el evento. Por favor, intenta de nuevo.');
+      console.error('Error al crear el Registro:', error);
+      Alert.alert('Error', 'No se pudo crear el Registro. Por favor, intenta de nuevo.');
     } finally {
       setIsLoading(false);
     }
@@ -1550,7 +1550,7 @@ export default function CreateEventScreen() {
           <RichTextEditor
             value={description}
             onChange={setDescription}
-            placeholder="Describe tu evento..."
+            placeholder="Describe tu Registro..."
           />
 
           <View style={[styles.mediaButtonsContainer, { marginTop: 16 }]}>

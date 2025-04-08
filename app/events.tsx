@@ -9,7 +9,7 @@ import { es } from 'date-fns/locale';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { EventCard } from '../components/EventCard';
 
-// Tipos de eventos disponibles
+// Tipos de Registros disponibles
 const EVENT_TYPES = [
   { id: 'text', icon: 'text', label: 'Texto' },
   { id: 'image', icon: 'image', label: 'Imagen' },
@@ -44,7 +44,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   'eat': 'Comida',
 };
 
-// Componente de elemento de evento optimizado con memo
+// Componente de elemento de Registro optimizado con memo
 const EventItem = memo(({ item, onPress }: { item: Event; onPress: () => void }) => {
   return (
     <EventCard 
@@ -85,8 +85,8 @@ export default function EventsScreen() {
       setHasMorePages(response.pagination.current_page < response.pagination.last_page);
       setCurrentPage(response.pagination.current_page);
     } catch (err) {
-      console.error('Error al cargar eventos:', err);
-      setError('No se pudieron cargar los eventos');
+      console.error('Error al cargar Registros:', err);
+      setError('No se pudieron cargar los Registros');
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
@@ -161,7 +161,7 @@ export default function EventsScreen() {
         >
           <Ionicons name="arrow-back" size={24} color="#202024" />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: '#202024' }]}>Todos los Eventos</Text>
+        <Text style={[styles.title, { color: '#202024' }]}>Todos los Registros</Text>
       </View>
 
       <FlatList
@@ -185,10 +185,10 @@ export default function EventsScreen() {
           <View style={styles.emptyState}>
             <Ionicons name="calendar-outline" size={48} color="#202024" />
             <Text style={[styles.emptyStateText, { color: '#202024' }]}>
-              No hay eventos
+              No hay Registros
             </Text>
             <Text style={[styles.emptyStateSubtext, { color: '#202024' }]}>
-              Registra un evento para comenzar
+              Registra un Registro para comenzar
             </Text>
           </View>
         }

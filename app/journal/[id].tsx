@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { Journal, User } from '../../services/journals';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
+import { EventCard } from '../../components/EventCard';
 
 export default function JournalDetailScreen() {
   const { colors } = useTheme();
@@ -167,21 +168,14 @@ export default function JournalDetailScreen() {
           {journal.events.length > 0 && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: '#202024' }]}>
-                Eventos
+                Registros
               </Text>
-              {journal.events.map((event: { id: number; title: string; created_at: string }) => (
-                <View key={event.id} style={[styles.eventItem, { backgroundColor: '#e7d3c1' }]}>
-                  <Text style={[styles.eventTitle, { color: '#202024' }]}>
-                    {event.title}
-                  </Text>
-                  <Text style={[styles.eventDate, { color: '#202024' }]}>
-                    {new Date(event.created_at).toLocaleDateString('es-ES', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric'
-                    })}
-                  </Text>
-                </View>
+              {journal.events.map((event) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  onPress={(eventId) => router.push(`/event/${eventId}`)}
+                />
               ))}
             </View>
           )}
@@ -300,20 +294,6 @@ const styles = StyleSheet.create({
   memberRole: {
     fontSize: 14,
     textTransform: 'capitalize',
-  },
-  eventItem: {
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  eventTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  eventDate: {
-    fontSize: 14,
-    opacity: 0.7,
   },
   errorText: {
     fontSize: 16,

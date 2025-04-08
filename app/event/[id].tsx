@@ -1,30 +1,25 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView, Image, Modal, Dimensions, FlatList } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
-import { eventsService, Event } from '../../services/events';
-import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { Audio } from 'expo-av';
-import { Video, ResizeMode } from 'expo-av';
-import { 
-  PinchGestureHandler, 
-  PanGestureHandler, 
-  State, 
-  GestureHandlerRootView, 
-  PinchGestureHandlerGestureEvent,
-  PanGestureHandlerGestureEvent
-} from 'react-native-gesture-handler';
-import Animated, { 
-  useAnimatedGestureHandler, 
-  useAnimatedStyle, 
-  useSharedValue, 
-  withSpring,
-  runOnJS
-} from 'react-native-reanimated';
+"use client"
 
-// Tipos de eventos disponibles
+import React, { useState, useRef, useEffect } from "react"
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  StatusBar,
+  Dimensions,
+  Image,
+  FlatList,
+  ActivityIndicator,
+} from "react-native"
+import { Audio } from "expo-av"
+import { Video, ResizeMode } from "expo-av"
+import { Ionicons } from "@expo/vector-icons"
+import { useLocalSearchParams, router } from "expo-router"
+import { eventsService, Event } from "../../services/events"
+
+// Tipos de Registros disponibles
 const EVENT_TYPES = [
   { id: 'text', icon: 'text', label: 'Texto' },
   { id: 'image', icon: 'image', label: 'Imagen' },
@@ -59,875 +54,656 @@ const CATEGORY_LABELS: Record<string, string> = {
   'eat': 'Comida',
 };
 
-export default function EventDetailScreen() {
-  const { colors } = useTheme();
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const [event, setEvent] = useState<Event | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'images' | 'videos' | 'audio'>('images');
-  
-  // Estados para la visualización de medios
-  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
-  const [isImageModalVisible, setIsImageModalVisible] = useState(false);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [audioDuration, setAudioDuration] = useState(0);
-  const [audioPosition, setAudioPosition] = useState(0);
-  const [isVideoPlaying, setIsVideoPlaying] = useState<Record<number, boolean>>({});
-  const videoRefs = useRef<Record<number, Video>>({});
-  
-  // Valores para el zoom y pan de imágenes
-  const scale = useSharedValue(1);
-  const savedScale = useSharedValue(1);
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
-  const savedTranslateX = useSharedValue(0);
-  const savedTranslateY = useSharedValue(0);
-  const imageWidth = useSharedValue(0);
-  const imageHeight = useSharedValue(0);
-  const screenWidth = useSharedValue(Dimensions.get('window').width);
-  const screenHeight = useSharedValue(Dimensions.get('window').height);
+const EventDetail = () => {
+  const { id } = useLocalSearchParams<{ id: string }>()
+  const [event, setEvent] = useState<Event | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [bookmarked, setBookmarked] = useState(false)
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [isMuted, setIsMuted] = useState(false)
+  const soundRef = useRef<Audio.Sound | null>(null)
+  const videoRef = useRef<Video | null>(null)
+  const flatListRef = useRef<FlatList | null>(null)
 
   useEffect(() => {
-    loadEvent();
+    loadEvent()
     return () => {
-      // Limpiar recursos al desmontar
-      if (sound) {
-        sound.unloadAsync();
+      if (soundRef.current) {
+        soundRef.current.unloadAsync()
       }
-      // Detener todos los videos
-      Object.values(videoRefs.current).forEach(video => {
-        if (video) {
-          video.stopAsync();
-        }
-      });
-      // Limpiar referencias
-      videoRefs.current = {};
-      setIsVideoPlaying({});
-    };
-  }, [id]);
-
-  // Reemplazar el efecto que usa router.addListener
-  useFocusEffect(
-    React.useCallback(() => {
-      return () => {
-        // Esta función se ejecuta cuando la pantalla pierde el foco
-        stopAllMedia();
-      };
-    }, [sound, isPlaying])
-  );
-
-  // Función para detener todos los medios
-  const stopAllMedia = async () => {
-    // Detener audio
-    if (sound && isPlaying) {
-      await sound.pauseAsync();
-      setIsPlaying(false);
     }
-    // Detener videos
-    Object.values(videoRefs.current).forEach(video => {
-      if (video) {
-        video.stopAsync();
-      }
-    });
-    setIsVideoPlaying({});
-  };
-
-  // Modificar la función de cambio de pestaña
-  const handleTabChange = (tab: 'images' | 'videos' | 'audio') => {
-    stopAllMedia();
-    setActiveTab(tab);
-  };
+  }, [id])
 
   const loadEvent = async () => {
     try {
-      setIsLoading(true);
-      const data = await eventsService.getEvent(parseInt(id));
+      setIsLoading(true)
+      const data = await eventsService.getEvent(parseInt(id))
       if (!data) {
-        throw new Error('Evento no encontrado');
+        throw new Error('Registro no encontrado')
       }
-      setEvent(data);
-      setError(null);
+      setEvent(data)
+      setError(null)
     } catch (err) {
-      setError('Error al cargar el evento');
-      console.error('Error loading event:', err);
+      setError('Error al cargar el Registro')
+      console.error('Error loading event:', err)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
-  // Función para obtener la etiqueta traducida del tipo de evento
+  // Format date for display
+  const formattedDate = event ? new Date(event.event_date).toLocaleDateString("es-ES", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }) : ""
+
+  // Helper function to get visibility icon
+  const getVisibilityIcon = (visibility: string) => {
+    switch (visibility) {
+      case "all":
+        return <Ionicons name="globe-outline" size={16} color="#666" />
+      case "private":
+        return <Ionicons name="lock-closed-outline" size={16} color="#666" />
+      default:
+        return <Ionicons name="person-outline" size={16} color="#666" />
+    }
+  }
+
+  // Helper function to get event type label
   const getEventTypeLabel = (typeId: string) => {
     return EVENT_TYPES.find(t => t.id === typeId)?.label || typeId;
   };
 
-  // Función para obtener la etiqueta traducida de la categoría
+  // Helper function to get category label
   const getCategoryLabel = (categoryId: string) => {
     return CATEGORY_LABELS[categoryId] || categoryId;
   };
 
-  // Función para formatear la fecha según el tipo de evento
-  const formatEventDate = (event: Event) => {
-    const dateToFormat = event.event_date || event.created_at;
-    
-    if (event.type === 'time') {
-      // Para eventos de tipo "time", mostrar solo la hora
-      return format(new Date(dateToFormat), "HH:mm", { locale: es });
-    } else {
-      // Para otros tipos de eventos, mostrar fecha y hora completas
-      return format(new Date(dateToFormat), "EEEE d 'de' MMMM 'de' yyyy, HH:mm", { locale: es });
-    }
-  };
+  // Helper function to format category for display
+  const formatCategory = (category: string) => {
+    return getCategoryLabel(category);
+  }
 
-  // Función para abrir el modal de imagen
-  const openImageModal = (index: number) => {
-    setSelectedImageIndex(index);
-    setIsImageModalVisible(true);
-    // Reiniciar valores de zoom y pan
-    scale.value = 1;
-    savedScale.value = 1;
-    translateX.value = 0;
-    translateY.value = 0;
-    savedTranslateX.value = 0;
-    savedTranslateY.value = 0;
-  };
+  const toggleBookmark = () => {
+    setBookmarked(!bookmarked)
+  }
 
-  // Función para cerrar el modal de imagen
-  const closeImageModal = () => {
-    setIsImageModalVisible(false);
-    setSelectedImageIndex(null);
-    // Reiniciar valores de zoom y pan
-    scale.value = 1;
-    savedScale.value = 1;
-    translateX.value = 0;
-    translateY.value = 0;
-    savedTranslateX.value = 0;
-    savedTranslateY.value = 0;
-  };
+  // Check if the current media is of a specific type
+  const currentMedia = event?.media?.[currentIndex]
+  const isImage = currentMedia?.mime_type.startsWith("image/")
+  const isVideo = currentMedia?.mime_type.startsWith("video/")
+  const isAudio = currentMedia?.mime_type.startsWith("audio/")
 
-  // Manejador de gestos para el zoom
-  const pinchHandler = useAnimatedGestureHandler<PinchGestureHandlerGestureEvent, { startScale: number }>({
-    onStart: (_, ctx) => {
-      ctx.startScale = scale.value;
-    },
-    onActive: (event, ctx) => {
-      scale.value = Math.max(1, Math.min(5, ctx.startScale * event.scale));
-    },
-    onEnd: () => {
-      savedScale.value = scale.value;
-    },
-  });
-
-  // Manejador de gestos para el pan
-  const panHandler = useAnimatedGestureHandler<PanGestureHandlerGestureEvent, { startX: number; startY: number }>({
-    onStart: (_, ctx) => {
-      ctx.startX = translateX.value;
-      ctx.startY = translateY.value;
-    },
-    onActive: (event, ctx) => {
-      // Solo permitir pan si hay zoom
-      if (scale.value > 1) {
-        // Calcular límites de movimiento basados en el tamaño de la imagen y la escala
-        const maxX = (imageWidth.value * scale.value - screenWidth.value) / 2;
-        const maxY = (imageHeight.value * scale.value - screenHeight.value) / 2;
-        
-        // Aplicar límites al movimiento
-        translateX.value = Math.min(maxX, Math.max(-maxX, ctx.startX + event.translationX));
-        translateY.value = Math.min(maxY, Math.max(-maxY, ctx.startY + event.translationY));
+  // Media control functions
+  const togglePlay = async () => {
+    if (isVideo && videoRef.current) {
+      if (isPlaying) {
+        await videoRef.current.pauseAsync()
+      } else {
+        await videoRef.current.playAsync()
       }
-    },
-    onEnd: () => {
-      savedTranslateX.value = translateX.value;
-      savedTranslateY.value = translateY.value;
-    },
-  });
-
-  // Estilo animado para el zoom y pan
-  const animatedImageStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { translateX: translateX.value },
-        { translateY: translateY.value },
-        { scale: scale.value },
-      ],
-    };
-  });
-
-  // Función para reiniciar el zoom y pan
-  const resetZoom = () => {
-    scale.value = withSpring(1);
-    savedScale.value = 1;
-    translateX.value = withSpring(0);
-    translateY.value = withSpring(0);
-    savedTranslateX.value = 0;
-    savedTranslateY.value = 0;
-  };
-
-  // Función para medir el tamaño de la imagen
-  const onImageLoad = (event: any) => {
-    const { width, height } = event.nativeEvent.source;
-    imageWidth.value = width;
-    imageHeight.value = height;
-  };
-
-  // Función para reproducir audio
-  const playAudio = async (audioUri: string) => {
-    try {
-      // Detener el audio actual si existe
-      if (sound) {
-        await sound.unloadAsync();
+      setIsPlaying(!isPlaying)
+    } else if (isAudio && soundRef.current) {
+      if (isPlaying) {
+        await soundRef.current.pauseAsync()
+      } else {
+        await soundRef.current.playAsync()
       }
-
-      // Cargar y reproducir el nuevo audio
-      const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri: audioUri },
-        { shouldPlay: true },
-        onPlaybackStatusUpdate
-      );
-      
-      setSound(newSound);
-      setIsPlaying(true);
-    } catch (error) {
-      console.error('Error al reproducir audio:', error);
+      setIsPlaying(!isPlaying)
     }
-  };
+  }
 
-  // Función para actualizar el estado de reproducción
-  const onPlaybackStatusUpdate = (status: any) => {
-    if (status.isLoaded) {
-      setAudioDuration(status.durationMillis / 1000);
-      setAudioPosition(status.positionMillis / 1000);
-      
-      if (status.didJustFinish) {
-        setIsPlaying(false);
+  const toggleMute = async () => {
+    if (isVideo && videoRef.current) {
+      await videoRef.current.setIsMutedAsync(!isMuted)
+      setIsMuted(!isMuted)
+    } else if (isAudio && soundRef.current) {
+      await soundRef.current.setIsMutedAsync(!isMuted)
+      setIsMuted(!isMuted)
+    }
+  }
+
+  const goToPrevious = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1)
+      flatListRef.current?.scrollToIndex({ index: currentIndex - 1, animated: true })
+      setIsPlaying(false)
+    }
+  }
+
+  const goToNext = () => {
+    if (event?.media && currentIndex < event.media.length - 1) {
+      setCurrentIndex(currentIndex + 1)
+      flatListRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true })
+      setIsPlaying(false)
+    }
+  }
+
+  // Function to load and unload audio
+  const setupAudio = async () => {
+    if (isAudio && currentMedia) {
+      try {
+        if (soundRef.current) {
+          await soundRef.current.unloadAsync()
+        }
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: currentMedia.file_path },
+          { shouldPlay: false, isLooping: false },
+        )
+        soundRef.current = sound
+      } catch (error) {
+        console.log("Error loading audio:", error)
       }
     }
-  };
+  }
 
-  // Función para pausar/reanudar audio
-  const toggleAudioPlayback = async () => {
-    if (!sound) return;
-    
-    if (isPlaying) {
-      await sound.pauseAsync();
-    } else {
-      await sound.playAsync();
-    }
-    
-    setIsPlaying(!isPlaying);
-  };
+  // Handle media change
+  useEffect(() => {
+    setupAudio()
+    setIsPlaying(false)
+  }, [currentIndex])
 
-  // Función para cambiar la posición del audio
-  const seekAudio = async (position: number) => {
-    if (!sound) return;
-    
-    await sound.setPositionAsync(position * 1000);
-    setAudioPosition(position);
-  };
+  // Render a media item
+  const renderMediaItem = ({ item, index }: { item: any; index: number }) => {
+    const isMediaImage = item.mime_type.startsWith("image/")
+    const isMediaVideo = item.mime_type.startsWith("video/")
+    const isMediaAudio = item.mime_type.startsWith("audio/")
 
-  // Función para formatear tiempo en segundos a formato mm:ss
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  };
-
-  // Función para reproducir/pausar video
-  const toggleVideoPlayback = (mediaId: number) => {
-    setIsVideoPlaying(prev => ({
-      ...prev,
-      [mediaId]: !prev[mediaId]
-    }));
-  };
-
-  // Función para renderizar el componente de audio
-  const renderAudioPlayer = (media: any) => {
-    return (
-      <View style={styles.audioContainer}>
-        <TouchableOpacity 
-          style={styles.audioPlayButton}
-          onPress={() => playAudio(media.file_path)}
-        >
-          <Ionicons 
-            name={isPlaying ? "pause-circle" : "play-circle"} 
-            size={48} 
-            color="#e16b5c" 
+    if (isMediaImage) {
+      return (
+        <View style={styles.mediaItem}>
+          <Image
+            source={{ uri: item.file_path }}
+            style={styles.mediaImage}
+            resizeMode="contain"
           />
-        </TouchableOpacity>
-        
-        <View style={styles.audioControls}>
-          <Text style={styles.audioTimeText}>
-            {formatTime(audioPosition)} / {formatTime(audioDuration)}
-          </Text>
-          
-          <View style={styles.audioProgressContainer}>
-            <View 
-              style={[
-                styles.audioProgress, 
-                { width: `${(audioPosition / audioDuration) * 100}%` }
-              ]} 
-            />
-          </View>
-          
-          <TouchableOpacity 
-            style={styles.audioSeekButton}
-            onPress={() => seekAudio(Math.max(0, audioPosition - 10))}
-          >
-            <Ionicons name="play-back" size={24} color="#e16b5c" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.audioSeekButton}
-            onPress={() => seekAudio(Math.min(audioDuration, audioPosition + 10))}
-          >
-            <Ionicons name="play-forward" size={24} color="#e16b5c" />
-          </TouchableOpacity>
         </View>
-      </View>
-    );
-  };
+      )
+    }
 
-  // Función para renderizar el componente de video
-  const renderVideoPlayer = (media: any, index: number) => {
-    return (
-      <View style={styles.videoContainer}>
-        <Video
-          ref={ref => {
-            if (ref) videoRefs.current[media.id] = ref;
-          }}
-          source={{ uri: media.file_path }}
-          style={styles.videoPlayer}
-          useNativeControls
-          resizeMode={ResizeMode.CONTAIN}
-          isLooping={false}
-          shouldPlay={isVideoPlaying[media.id] || false}
-          onPlaybackStatusUpdate={(status) => {
-            if (status.isLoaded && status.didJustFinish) {
-              setIsVideoPlaying(prev => ({
-                ...prev,
-                [media.id]: false
-              }));
-            }
-          }}
-        />
-        <TouchableOpacity 
-          style={styles.videoPlayButton}
-          onPress={() => toggleVideoPlayback(media.id)}
-        >
-          <Ionicons 
-            name={isVideoPlaying[media.id] ? "pause-circle" : "play-circle"} 
-            size={48} 
-            color="#e16b5c" 
+    if (isMediaVideo) {
+      return (
+        <View style={styles.mediaItem}>
+          <Video
+            ref={index === currentIndex ? videoRef : null}
+            source={{ uri: item.file_path }}
+            style={styles.mediaVideo}
+            useNativeControls={false}
+            resizeMode={ResizeMode.CONTAIN}
+            isLooping
+            isMuted={index === currentIndex ? isMuted : true}
+            shouldPlay={index === currentIndex ? isPlaying : false}
           />
-        </TouchableOpacity>
-      </View>
-    );
-  };
+          {index === currentIndex && (
+            <View style={styles.videoControls}>
+              <TouchableOpacity style={styles.controlButton} onPress={togglePlay}>
+                {isPlaying ? (
+                  <Ionicons name="pause" size={20} color="#fff" />
+                ) : (
+                  <Ionicons name="play" size={20} color="#fff" />
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.controlButton} onPress={toggleMute}>
+                {isMuted ? (
+                  <Ionicons name="volume-mute" size={20} color="#fff" />
+                ) : (
+                  <Ionicons name="volume-high" size={20} color="#fff" />
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      )
+    }
 
-  // Función para filtrar medios por tipo
-  const getFilteredMedia = (type: 'images' | 'videos' | 'audio') => {
-    if (!event?.media) return [];
-    
-    return event.media.filter(media => {
-      const fileExtension = media.file_path.split('.').pop()?.toLowerCase();
-      switch (type) {
-        case 'images':
-          return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension || '');
-        case 'videos':
-          return ['mp4', 'mov', 'avi', 'webm'].includes(fileExtension || '');
-        case 'audio':
-          return ['mp3', 'wav', 'm4a', 'aac'].includes(fileExtension || '');
-        default:
-          return false;
-      }
-    });
-  };
+    if (isMediaAudio) {
+      return (
+        <View style={styles.mediaAudioContainer}>
+          <View style={styles.audioPlayer}>
+            <TouchableOpacity style={styles.audioPlayButton} onPress={togglePlay}>
+              {isPlaying ? (
+                <Ionicons name="pause" size={24} color="#333" />
+              ) : (
+                <Ionicons name="play" size={24} color="#333" />
+              )}
+            </TouchableOpacity>
+            <View style={styles.audioInfo}>
+              <Text style={styles.audioTitle} numberOfLines={1}>
+                {item.file_name}
+              </Text>
+              <Text style={styles.audioSubtitle}>Audio {item.type.toUpperCase()}</Text>
+            </View>
+            <TouchableOpacity style={styles.audioControlButton} onPress={toggleMute}>
+              {isMuted ? (
+                <Ionicons name="volume-mute" size={20} color="#fff" />
+              ) : (
+                <Ionicons name="volume-high" size={20} color="#fff" />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      )
+    }
+
+    return null
+  }
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
+      <View style={styles.container}>
         <ActivityIndicator size="large" color="#e16b5c" />
       </View>
-    );
+    )
   }
 
   if (error || !event) {
     return (
-      <View style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
-        <Text style={[styles.errorText, { color: '#FF3B30' }]}>
-          {error || 'Evento no encontrado'}
+      <View style={styles.container}>
+        <Text style={styles.errorText}>
+          {error || 'Registro no encontrado'}
         </Text>
         <TouchableOpacity
-          style={[styles.retryButton, { backgroundColor: '#e16b5c' }]}
+          style={styles.retryButton}
           onPress={loadEvent}
         >
           <Text style={styles.retryButtonText}>Reintentar</Text>
         </TouchableOpacity>
       </View>
-    );
+    )
   }
 
+  // Check if the entry is part of a bitacora
+  const hasBitacora = event.include_in_personal_journal || event.shared_journal_id !== null
+
   return (
-    <ScrollView style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#202024" />
+        <TouchableOpacity style={styles.iconButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={20} color="#000" />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: '#202024' }]}>
-          {event.title}
-        </Text>
       </View>
 
-      <View style={styles.content}>
-        <View style={styles.eventInfo}>
-          <View style={styles.infoRow}>
-            <Ionicons name="calendar-outline" size={20} color="#e16b5c" />
-            <Text style={[styles.infoText, { color: '#202024' }]}>
-              {formatEventDate(event)}
-            </Text>
-          </View>
-
-          {event.location && (
-            <View style={styles.infoRow}>
-              <Ionicons name="location-outline" size={20} color="#e16b5c" />
-              <Text style={[styles.infoText, { color: '#202024' }]}>
-                {event.location}
-              </Text>
-            </View>
-          )}
-
-          <View style={styles.infoRow}>
-            <Ionicons name="pricetag-outline" size={20} color="#e16b5c" />
-            <Text style={[styles.infoText, { color: '#202024' }]}>
-              {getEventTypeLabel(event.type)} - {getCategoryLabel(event.category)}
-            </Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Ionicons name="person-outline" size={20} color="#e16b5c" />
-            <Text style={[styles.infoText, { color: '#202024' }]}>
-              Creado por: {event.user?.name || 'Usuario desconocido'}
-            </Text>
-          </View>
-
-          {event.shared_journal && (
-            <View style={styles.infoRow}>
-              <Ionicons name="book-outline" size={20} color="#e16b5c" />
-              <Text style={[styles.infoText, { color: '#202024' }]}>
-                Bitácora compartida: {event.shared_journal.name}
-              </Text>
-            </View>
-          )}
-
-          <View style={styles.infoRow}>
-            <Ionicons name="eye-outline" size={20} color="#e16b5c" />
-            <Text style={[styles.infoText, { color: '#202024' }]}>
-              Visibilidad: {event.visibility === 'all' ? 'Todos' : 'Personalizado'}
-            </Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Ionicons name="journal-outline" size={20} color="#e16b5c" />
-            <Text style={[styles.infoText, { color: '#202024' }]}>
-              Incluido en bitácora personal: {event.include_in_personal_journal ? 'Sí' : 'No'}
-            </Text>
-          </View>
-
-          {event.description && (
-            <View style={styles.descriptionContainer}>
-              <Text style={[styles.descriptionTitle, { color: '#202024' }]}>
-                Descripción
-              </Text>
-              <Text style={[styles.description, { color: '#202024' }]}>
-                {event.description}
-              </Text>
-            </View>
-          )}
-        </View>
-
+      <ScrollView style={styles.scrollContent}>
+        {/* Media Gallery */}
         {event.media && event.media.length > 0 && (
-          <View style={styles.mediaContainer}>
-            <Text style={[styles.mediaTitle, { color: '#202024' }]}>
-              Multimedia 
-            </Text>
-            
-            <View style={styles.tabsContainer}>
-              <TouchableOpacity 
-                style={[styles.tab, activeTab === 'images' && styles.activeTab]}
-                onPress={() => handleTabChange('images')}
-              >
-                <Ionicons 
-                  name="images" 
-                  size={20} 
-                  color={activeTab === 'images' ? '#e16b5c' : '#666'} 
-                />
-                <Text style={[styles.tabText, activeTab === 'images' && styles.activeTabText]}>
-                  Imágenes
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.tab, activeTab === 'videos' && styles.activeTab]}
-                onPress={() => handleTabChange('videos')}
-              >
-                <Ionicons 
-                  name="videocam" 
-                  size={20} 
-                  color={activeTab === 'videos' ? '#e16b5c' : '#666'} 
-                />
-                <Text style={[styles.tabText, activeTab === 'videos' && styles.activeTabText]}>
-                  Videos
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.tab, activeTab === 'audio' && styles.activeTab]}
-                onPress={() => handleTabChange('audio')}
-              >
-                <Ionicons 
-                  name="musical-note" 
-                  size={20} 
-                  color={activeTab === 'audio' ? '#e16b5c' : '#666'} 
-                />
-                <Text style={[styles.tabText, activeTab === 'audio' && styles.activeTabText]}>
-                  Audio
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {activeTab === 'images' && getFilteredMedia('images').length > 0 && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {getFilteredMedia('images').map((media, index) => (
-                  <TouchableOpacity 
-                    key={media.id} 
-                    onPress={() => openImageModal(index)}
-                  >
-                    <Image
-                      source={{ uri: media.file_path }}
-                      style={styles.mediaThumbnail}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
-
-            {activeTab === 'videos' && getFilteredMedia('videos').length > 0 && (
-              <View>
-                {getFilteredMedia('videos').map((media, index) => (
-                  <View key={media.id} style={styles.videoContainer}>
-                    {renderVideoPlayer(media, index)}
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {activeTab === 'audio' && getFilteredMedia('audio').length > 0 && (
-              <View>
-                {getFilteredMedia('audio').map((media) => (
-                  <View key={media.id} style={styles.audioContainer}>
-                    {renderAudioPlayer(media)}
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {getFilteredMedia(activeTab).length === 0 && (
-              <Text style={styles.noMediaText}>
-                No hay {activeTab === 'images' ? 'imágenes' : activeTab === 'videos' ? 'videos' : 'archivos de audio'} disponibles
-              </Text>
-            )}
-          </View>
-        )}
-      </View>
-      
-      {/* Modal para ver imágenes ampliadas */}
-      <Modal
-        visible={isImageModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={closeImageModal}
-      >
-        <GestureHandlerRootView style={styles.modalContainer}>
-          <TouchableOpacity 
-            style={styles.modalCloseButton}
-            onPress={closeImageModal}
-          >
-            <Ionicons name="close" size={28} color="white" />
-          </TouchableOpacity>
-          
-          {selectedImageIndex !== null && event?.media && (
+          <View style={styles.mediaGallery}>
             <FlatList
-              data={event.media.filter(media => {
-                const fileExtension = media.file_path.split('.').pop()?.toLowerCase();
-                return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension || '');
-              })}
-              renderItem={({ item }) => (
-                <PanGestureHandler
-                  onGestureEvent={panHandler}
-                  onHandlerStateChange={(event) => {
-                    if (event.nativeEvent.state === State.END) {
-                      savedTranslateX.value = translateX.value;
-                      savedTranslateY.value = translateY.value;
-                    }
-                  }}
-                  enabled={scale.value > 1}
-                >
-                  <Animated.View>
-                    <PinchGestureHandler
-                      onGestureEvent={pinchHandler}
-                      onHandlerStateChange={(event) => {
-                        if (event.nativeEvent.state === State.END) {
-                          savedScale.value = scale.value;
-                        }
-                      }}
-                    >
-                      <Animated.View style={[styles.modalImageContainer, animatedImageStyle]}>
-                        <Image
-                          source={{ uri: item.file_path }}
-                          style={styles.modalImage}
-                          resizeMode="contain"
-                          onLoad={onImageLoad}
-                        />
-                      </Animated.View>
-                    </PinchGestureHandler>
-                  </Animated.View>
-                </PanGestureHandler>
-              )}
+              ref={flatListRef}
+              data={event.media}
+              renderItem={renderMediaItem}
+              keyExtractor={(item) => item.id.toString()}
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
-              initialScrollIndex={selectedImageIndex}
-              getItemLayout={(data, index) => ({
-                length: Dimensions.get('window').width,
-                offset: Dimensions.get('window').width * index,
-                index,
-              })}
+              scrollEnabled={false}
+              initialScrollIndex={currentIndex}
             />
-          )}
-          
-          <View style={styles.modalNavigation}>
-            <TouchableOpacity 
-              style={styles.modalNavButton}
-              onPress={() => {
-                if (selectedImageIndex !== null && selectedImageIndex > 0) {
-                  setSelectedImageIndex(selectedImageIndex - 1);
-                  resetZoom();
-                }
-              }}
-              disabled={selectedImageIndex === 0}
-            >
-              <Ionicons name="chevron-back" size={28} color="white" />
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.modalZoomButton}
-              onPress={resetZoom}
-            >
-              <Ionicons name="resize" size={24} color="white" />
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.modalNavButton}
-              onPress={() => {
-                if (selectedImageIndex !== null && event?.media && 
-                    selectedImageIndex < event.media.filter(media => {
-                      const fileExtension = media.file_path.split('.').pop()?.toLowerCase();
-                      return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension || '');
-                    }).length - 1) {
-                  setSelectedImageIndex(selectedImageIndex + 1);
-                  resetZoom();
-                }
-              }}
-              disabled={selectedImageIndex === (event?.media?.filter(media => {
-                const fileExtension = media.file_path.split('.').pop()?.toLowerCase();
-                return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension || '');
-              }).length || 0) - 1}
-            >
-              <Ionicons name="chevron-forward" size={28} color="white" />
-            </TouchableOpacity>
+
+            {/* Navigation Controls */}
+            {event.media.length > 1 && (
+              <>
+                <TouchableOpacity style={styles.navButtonLeft} onPress={goToPrevious}>
+                  <Ionicons name="chevron-back" size={24} color="#fff" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.navButtonRight} onPress={goToNext}>
+                  <Ionicons name="chevron-forward" size={24} color="#fff" />
+                </TouchableOpacity>
+                <View style={styles.mediaCounter}>
+                  <Text style={styles.mediaCounterText}>
+                    {currentIndex + 1}/{event.media.length} - {isImage ? "Imagen" : isVideo ? "Video" : "Audio"}
+                  </Text>
+                </View>
+                <View style={styles.paginationDots}>
+                  {event.media.map((_: any, index: number) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={[styles.paginationDot, index === currentIndex && styles.paginationDotActive]}
+                      onPress={() => setCurrentIndex(index)}
+                    />
+                  ))}
+                </View>
+              </>
+            )}
           </View>
-        </GestureHandlerRootView>
-      </Modal>
-    </ScrollView>
-  );
+        )}
+
+        {/* Content */}
+        <View style={styles.content}>
+          {/* Bitacora Indicator - Only show if it has a bitacora */}
+          {hasBitacora && (
+            <View style={styles.bitacoraContainer}>
+              <View style={styles.badge}>
+                <Ionicons name="book-outline" size={12} color="#333" />
+                <Text style={styles.badgeText}>Bitácora Personal</Text>
+              </View>
+            </View>
+          )}
+
+          {/* Metadata - Moved above title */}
+          <View style={styles.metadataContainer}>
+            <View style={styles.badge}>
+              {getVisibilityIcon(event.visibility)}
+              <Text style={styles.badgeText}>
+                {event.visibility === "all"
+                  ? "Público"
+                  : event.visibility === "private"
+                    ? "Privado"
+                    : "Compartido"}
+              </Text>
+            </View>
+
+            <View style={[styles.badge, styles.secondaryBadge]}>
+              <Text style={styles.badgeText}>{formatCategory(event.category)}</Text>
+            </View>
+
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{getEventTypeLabel(event.type)}</Text>
+            </View>
+          </View>
+
+          {/* Title and Date */}
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>{event.title}</Text>
+            <View style={styles.dateContainer}>
+              <Ionicons name="calendar-outline" size={12} color="#666" />
+              <Text style={styles.dateText}>{formattedDate}</Text>
+            </View>
+          </View>
+
+          {/* User Info */}
+          <View style={styles.userContainer}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{event.user?.name?.charAt(0) || '?'}</Text>
+            </View>
+            <View>
+              <Text style={styles.userName}>{event.user?.name || 'Usuario desconocido'}</Text>
+              <Text style={styles.userRole}>Autor</Text>
+            </View>
+          </View>
+
+          <View style={styles.separator} />
+
+          {/* Description if available */}
+          {event.description && <Text style={styles.description}>{event.description}</Text>}
+        </View>
+      </ScrollView>
+    </View>
+  )
 }
+
+const windowWidth = Dimensions.get("window").width
+const mediaHeight = Dimensions.get("window").height * 0.35
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#f8f9fa",
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: "#fff",
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    borderBottomColor: "#e1e4e8",
   },
-  backButton: {
+  headerActions: {
+    flexDirection: "row",
+  },
+  iconButton: {
+    padding: 8,
+    borderRadius: 20,
+  },
+  scrollContent: {
+    flex: 1,
+  },
+  mediaGallery: {
+    height: mediaHeight,
+    width: windowWidth,
+    backgroundColor: "#000",
+    position: "relative",
+  },
+  mediaItem: {
+    width: windowWidth,
+    height: mediaHeight,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  mediaImage: {
+    width: "100%",
+    height: "100%",
+  },
+  mediaVideo: {
+    width: "100%",
+    height: "100%",
+  },
+  mediaAudioContainer: {
+    width: windowWidth,
+    height: mediaHeight,
+    backgroundColor: "#1a2632",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  audioPlayer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    padding: 16,
+    borderRadius: 12,
+    width: "100%",
+    maxWidth: 360,
+  },
+  audioPlayButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 16,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  audioInfo: {
+    flex: 1,
+  },
+  audioTitle: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  audioSubtitle: {
+    color: "rgba(255, 255, 255, 0.7)",
+    fontSize: 12,
+  },
+  audioControlButton: {
+    padding: 8,
+  },
+  videoControls: {
+    position: "absolute",
+    bottom: 16,
+    left: 16,
+    flexDirection: "row",
+  },
+  controlButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
+  },
+  navButtonLeft: {
+    position: "absolute",
+    top: "50%",
+    left: 12,
+    transform: [{ translateY: -20 }],
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  navButtonRight: {
+    position: "absolute",
+    top: "50%",
+    right: 12,
+    transform: [{ translateY: -20 }],
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  mediaCounter: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  mediaCounterText: {
+    color: "#fff",
+    fontSize: 12,
+  },
+  paginationDots: {
+    position: "absolute",
+    bottom: 16,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
+    marginHorizontal: 4,
+  },
+  paginationDotActive: {
+    backgroundColor: "#fff",
   },
   content: {
-    padding: 20,
-  },
-  eventInfo: {
-    marginBottom: 24,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  infoText: {
-    fontSize: 16,
-    marginLeft: 12,
-  },
-  descriptionContainer: {
     padding: 16,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
   },
-  descriptionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+  bitacoraContainer: {
     marginBottom: 8,
   },
-  description: {
-    fontSize: 16,
-    lineHeight: 24,
+  metadataContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 12,
+    gap: 8,
   },
-  mediaContainer: {
-    marginBottom: 24,
+  badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#e1e4e8",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginRight: 8,
   },
-  mediaTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  secondaryBadge: {
+    backgroundColor: "#f1f3f5",
+    borderColor: "#e9ecef",
+  },
+  badgeText: {
+    fontSize: 12,
+    color: "#495057",
+    marginLeft: 4,
+  },
+  titleContainer: {
     marginBottom: 12,
   },
-  mediaThumbnail: {
-    width: 120,
-    height: 120,
-    borderRadius: 8,
-    marginRight: 12,
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 4,
+    color: "#212529",
   },
-  videoContainer: {
-    position: 'relative',
-    height: 200,
-    backgroundColor: '#000',
-    borderRadius: 8,
-    overflow: 'hidden',
+  dateContainer: {
+    flexDirection: "row",
+    alignItems: "center",
   },
-  videoPlayer: {
-    width: '100%',
-    height: '100%',
+  dateText: {
+    fontSize: 12,
+    color: "#6c757d",
+    marginLeft: 4,
   },
-  videoPlayButton: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -24 }, { translateY: -24 }],
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 24,
+  userContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
   },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#4dabf7",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
   },
-  modalCloseButton: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-    zIndex: 10,
-    padding: 8,
+  avatarText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
-  modalImageContainer: {
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height,
-    justifyContent: 'center',
-    alignItems: 'center',
+  userName: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#212529",
   },
-  modalImage: {
-    width: '100%',
-    height: '100%',
+  userRole: {
+    fontSize: 12,
+    color: "#6c757d",
   },
-  modalNavigation: {
-    position: 'absolute',
-    bottom: 40,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 20,
+  separator: {
+    height: 1,
+    backgroundColor: "#e9ecef",
+    marginVertical: 12,
   },
-  modalNavButton: {
-    padding: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 20,
-  },
-  modalZoomButton: {
-    padding: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 20,
+  description: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#495057",
   },
   errorText: {
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 16,
+    color: "#FF3B30",
   },
   retryButton: {
     padding: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    backgroundColor: "#e16b5c",
+    alignItems: "center",
   },
   retryButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
-  tabsContainer: {
-    flexDirection: 'row',
-    marginBottom: 16,
-    backgroundColor: '#f7f5f2',
-    borderRadius: 12,
-    padding: 4,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 8,
-    borderRadius: 8,
-    gap: 4,
-  },
-  activeTab: {
-    backgroundColor: '#e16b5c20',
-  },
-  tabText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  activeTabText: {
-    color: '#e16b5c',
-    fontWeight: '500',
-  },
-  noMediaText: {
-    textAlign: 'center',
-    color: '#666',
-    fontSize: 14,
-    fontStyle: 'italic',
-    marginTop: 16,
-  },
-}); 
+})
+
+export default EventDetail 

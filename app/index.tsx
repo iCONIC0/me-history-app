@@ -11,7 +11,7 @@ import { es } from 'date-fns/locale';
 import { EventCard } from '../components/EventCard';
 import { MoodSelector } from '../components/MoodSelector';
 
-// Tipos de eventos disponibles
+// Tipos de Registros disponibles
 const EVENT_TYPES = [
   { id: 'text', icon: 'text', label: 'Texto' },
   { id: 'image', icon: 'image', label: 'Imagen' },
@@ -189,7 +189,7 @@ export default function HomeScreen() {
             <View style={styles.menuIconContainer}>
               <Ionicons name="flash" size={24} color="#e16b5c" />
             </View>
-            <Text style={styles.menuItemText}>Eventos Sugeridos</Text>
+            <Text style={styles.menuItemText}>Registros Sugeridos</Text>
             <Ionicons name="chevron-forward" size={20} color="#202024" />
           </TouchableOpacity>
           
@@ -217,7 +217,7 @@ export default function HomeScreen() {
             <View style={styles.menuIconContainer}>
               <Ionicons name="add-circle" size={24} color="#e16b5c" />
             </View>
-            <Text style={styles.menuItemText}>Crear Evento</Text>
+            <Text style={styles.menuItemText}>Crear Registro</Text>
             <Ionicons name="chevron-forward" size={20} color="#202024" />
           </TouchableOpacity>
         </View>
@@ -263,7 +263,7 @@ export default function HomeScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: '#202024' }]}>
-                Eventos Recientes
+                Registros Recientes
               </Text>
             </View>
             
@@ -292,10 +292,10 @@ export default function HomeScreen() {
               <View style={styles.emptyState}>
                 <Ionicons name="calendar-outline" size={48} color="#202024" />
                 <Text style={[styles.emptyStateText, { color: '#202024' }]}>
-                  No hay eventos recientes
+                  No hay Registros recientes
                 </Text>
                 <Text style={[styles.emptyStateSubtext, { color: '#202024' }]}>
-                  Registra un evento para comenzar
+                  Registra un Registro para comenzar
                 </Text>
               </View>
             )}

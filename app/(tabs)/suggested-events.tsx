@@ -28,7 +28,7 @@ import { Video, ResizeMode } from 'expo-av';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { journalsService, Journal } from '../../services/journals';
 
-// Tipos de eventos disponibles
+// Tipos de Registros disponibles
 const EVENT_TYPES = [
   { id: 'text', icon: 'text', label: 'Texto' },
   { id: 'image', icon: 'image', label: 'Imagen' },
@@ -62,7 +62,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   'dating': 'Citas',
 };
 
-// Definición de campos adicionales por tipo de evento
+// Definición de campos adicionales por tipo de Registro
 const EVENT_TYPE_FIELDS = {
   text: [
     { id: 'content', label: 'Contenido', type: 'textarea', required: true },
@@ -632,7 +632,7 @@ export default function SuggestedEventsScreen() {
     if (cameraStatus !== 'granted' || audioStatus !== 'granted' || imageStatus !== 'granted') {
       Alert.alert(
         'Permisos necesarios',
-        'Se requieren permisos para acceder a la cámara, micrófono y galería para crear eventos con medios.',
+        'Se requieren permisos para acceder a la cámara, micrófono y galería para crear Registros con medios.',
         [{ text: 'OK' }]
       );
     }
@@ -651,8 +651,8 @@ export default function SuggestedEventsScreen() {
       setFrequentEvents(response.frequent);
       setPredefinedEvents(response.predefined);
     } catch (err) {
-      console.error('Error al cargar eventos sugeridos:', err);
-      setError('No se pudieron cargar los eventos sugeridos');
+      console.error('Error al cargar Registros sugeridos:', err);
+      setError('No se pudieron cargar los Registros sugeridos');
       setFrequentEvents([]);
       setPredefinedEvents([]);
     } finally {
@@ -889,13 +889,13 @@ export default function SuggestedEventsScreen() {
         return;
       }
 
-      // Crear un evento basado en la sugerencia con valores consistentes
+      // Crear un Registro basado en la sugerencia con valores consistentes
       const eventData: CreateEventData = {
         title: selectedEvent.title,
         description: description.trim() || undefined,
         type: selectedEvent.type,
         category: selectedEvent.category,
-        // Usar la fecha actual para todos los tipos de eventos
+        // Usar la fecha actual para todos los tipos de Registros
         event_date: new Date().toISOString(),
         metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
       };
@@ -908,10 +908,10 @@ export default function SuggestedEventsScreen() {
       const newEvent = await eventsService.createEvent(eventData);
       
       if (!newEvent) {
-        throw new Error('No se pudo crear el evento');
+        throw new Error('No se pudo crear el Registro');
       }
       
-      // Recargar eventos sugeridos
+      // Recargar Registros sugeridos
       loadSuggestedEvents();
       
       // Cerrar modal
@@ -920,8 +920,8 @@ export default function SuggestedEventsScreen() {
       // Proporcionar feedback de éxito
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err) {
-      console.error('Error al crear evento sugerido:', err);
-      Alert.alert('Error', 'No se pudo registrar el evento');
+      console.error('Error al crear Registro sugerido:', err);
+      Alert.alert('Error', 'No se pudo registrar el Registro');
       
       // Proporcionar feedback de error
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -1119,7 +1119,7 @@ export default function SuggestedEventsScreen() {
                   style={[styles.input, styles.textArea, { backgroundColor: '#e7d3c1', color: '#202024' }]}
                   value={description}
                   onChangeText={setDescription}
-                  placeholder="Descripción del evento (opcional)"
+                  placeholder="Descripción del Registro (opcional)"
                   placeholderTextColor="#20202480"
                   multiline
                   numberOfLines={4}
@@ -1170,7 +1170,7 @@ export default function SuggestedEventsScreen() {
                 style={[styles.createButton, { backgroundColor: '#e16b5c' }]}
                 onPress={handleCreateEvent}
               >
-                <Text style={styles.createButtonText}>Crear Evento</Text>
+                <Text style={styles.createButtonText}>Crear Registro</Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -1207,13 +1207,13 @@ export default function SuggestedEventsScreen() {
     );
   };
 
-  // Obtener categorías únicas de los eventos según la pestaña activa
+  // Obtener categorías únicas de los Registros según la pestaña activa
   const getCategories = () => {
     const events = activeTab === 'frequent' ? frequentEvents : predefinedEvents;
     return [...new Set(events.map(event => event.category))];
   };
 
-  // Filtrar eventos por categoría seleccionada según la pestaña activa
+  // Filtrar Registros por categoría seleccionada según la pestaña activa
   const getFilteredEvents = () => {
     const events = activeTab === 'frequent' ? frequentEvents : predefinedEvents;
     return selectedCategory
@@ -1267,9 +1267,9 @@ export default function SuggestedEventsScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: '#f7f5f2' }]}>
       <ScrollView>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: '#202024' }]}>Eventos Sugeridos</Text>
+          <Text style={[styles.title, { color: '#202024' }]}>Registros Sugeridos</Text>
           <Text style={[styles.subtitle, { color: '#202024' }]}>
-            Descubre eventos que podrían interesarte
+            Descubre Registros que podrían interesarte
           </Text>
         </View>
 
@@ -1319,7 +1319,7 @@ export default function SuggestedEventsScreen() {
 
         <View style={styles.suggestedEventsSection}>
           <Text style={[styles.sectionTitle, { color: '#202024' }]}>
-            {activeTab === 'frequent' ? 'Eventos Frecuentes' : 'Eventos Predefinidos'}
+            {activeTab === 'frequent' ? 'Registros Frecuentes' : 'Registros Predefinidos'}
           </Text>
           
           {filteredEvents.length > 0 ? (
@@ -1334,14 +1334,14 @@ export default function SuggestedEventsScreen() {
             <View style={styles.emptyState}>
               <Ionicons name="calendar-outline" size={48} color="#202024" />
               <Text style={[styles.emptyStateText, { color: '#202024' }]}>
-                No hay eventos sugeridos
+                No hay Registros sugeridos
               </Text>
               <Text style={[styles.emptyStateSubtext, { color: '#202024' }]}>
                 {selectedCategory 
-                  ? 'No hay eventos en esta categoría' 
+                  ? 'No hay Registros en esta categoría' 
                   : activeTab === 'frequent' 
-                    ? 'No tienes eventos frecuentes' 
-                    : 'No hay eventos predefinidos disponibles'}
+                    ? 'No tienes Registros frecuentes' 
+                    : 'No hay Registros predefinidos disponibles'}
               </Text>
             </View>
           )}

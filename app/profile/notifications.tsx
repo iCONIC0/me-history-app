@@ -28,8 +28,8 @@ export default function NotificationsScreen() {
     },
     {
       id: 'suggested_events',
-      title: 'Eventos Sugeridos',
-      description: 'Recordatorios para eventos sugeridos programados',
+      title: 'Registros Sugeridos',
+      description: 'Recordatorios para Registros sugeridos programados',
       enabled: true,
     },
     {

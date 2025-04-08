@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Event } from '../services/events';
 
-// Tipos de eventos disponibles
+// Tipos de Registros disponibles
 const EVENT_TYPES = [
   { id: 'text', icon: 'text', label: 'Texto' },
   { id: 'image', icon: 'image', label: 'Imagen' },
@@ -49,6 +49,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onPress }) => {
   const date = new Date(event.event_date || event.created_at);
   const day = format(date, 'dd', { locale: es });
   const month = format(date, 'MMM', { locale: es });
+  const time = format(date, 'HH:mm', { locale: es });
 
   return (
     <TouchableOpacity 
@@ -58,6 +59,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onPress }) => {
       <View style={styles.dateContainer}>
         <Text style={styles.dayText}>{day}</Text>
         <Text style={styles.monthText}>{month}</Text>
+        <Text style={styles.timeText}>{time}</Text>
       </View>
       <View style={styles.separator} />
       <View style={styles.eventContent}>
@@ -142,6 +144,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#202024',
     textTransform: 'uppercase',
+  },
+  timeText: {
+    fontSize: 12,
+    color: '#202024',
+    marginTop: 2,
   },
   separator: {
     width: 1,

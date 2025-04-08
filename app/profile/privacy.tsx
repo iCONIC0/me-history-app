@@ -35,7 +35,7 @@ export default function PrivacyScreen() {
     {
       id: 'location_sharing',
       title: 'Compartir Ubicación',
-      description: 'Incluye la ubicación en tus eventos y momentos',
+      description: 'Incluye la ubicación en tus Registros y momentos',
       enabled: false,
     },
   ]);

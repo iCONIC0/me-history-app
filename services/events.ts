@@ -60,7 +60,7 @@ interface ApiResponse<T> {
   message?: string;
 }
 
-// Interfaz para los eventos sugeridos
+// Interfaz para los Registros sugeridos
 export interface SuggestedEvent {
   id: string;
   title: string;
@@ -74,7 +74,7 @@ export interface SuggestedEvent {
   icon: string;
 }
 
-// Interfaz para la respuesta del endpoint de eventos sugeridos
+// Interfaz para la respuesta del endpoint de Registros sugeridos
 export interface SuggestedEventsResponse {
   frequent: SuggestedEvent[];
   predefined: SuggestedEvent[];
@@ -98,29 +98,29 @@ export interface MediaFile {
 }
 
 export const eventsService = {
-  // Obtener todos los eventos con paginación
+  // Obtener todos los Registros con paginación
   getEvents: async (page: number = 1, per_page: number = 10): Promise<EventsResponse> => {
     try {
       const response :any = await api.get<ApiResponse<EventsResponse>>(`/api/events?page=${page}&limit=${per_page}`);
       return response.data || { data: [], pagination: { current_page: 1, last_page: 1, per_page: 10, total: 0 } };
     } catch (error) {
-      console.error('Error al obtener eventos:', error);
+      console.error('Error al obtener Registros:', error);
       return { data: [], pagination: { current_page: 1, last_page: 1, per_page: 10, total: 0 } };
     }
   },
 
-  // Obtener un evento específico
+  // Obtener un Registro específico
   getEvent: async (id: number): Promise<Event | null> => {
     try {
       const response = await api.get<ApiResponse<Event>>(`/api/events/${id}`);
       return response.data.data;
     } catch (error) {
-      console.error('Error al obtener evento:', error);
+      console.error('Error al obtener Registro:', error);
       return null;
     }
   },
 
-  // Crear un nuevo evento
+  // Crear un nuevo Registro
   createEvent: async (data: CreateEventData): Promise<Event | null> => {
     try {
       // Obtener la zona horaria del dispositivo
@@ -129,7 +129,7 @@ export const eventsService = {
       // Determinar si hay archivos para enviar
       const hasMedia = data.media && data.media.length > 0;
       
-      // Preparar los datos según el tipo de evento
+      // Preparar los datos según el tipo de Registro
       let requestData;
       let headers: Record<string, string> = {
         'Accept': 'application/json',
@@ -196,18 +196,18 @@ export const eventsService = {
       
       return response.data.data;
     } catch (error) {
-      console.error('Error al crear evento:', error);
+      console.error('Error al crear Registro:', error);
       return null;
     }
   },
 
-  // Obtener sugerencias de eventos
+  // Obtener sugerencias de Registros
   getSuggestedEvents: async (): Promise<SuggestedEventsResponse> => {
     try {
       const response = await api.get<ApiResponse<SuggestedEventsResponse>>('/api/events/suggested');
       return response.data.data;
     } catch (error) {
-      console.error('Error al obtener eventos sugeridos:', error);
+      console.error('Error al obtener Registros sugeridos:', error);
       return { frequent: [], predefined: [] };
     }
   },
