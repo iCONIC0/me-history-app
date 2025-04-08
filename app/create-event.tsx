@@ -20,7 +20,7 @@ import {
 } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { eventsService, CreateEventData } from '../services/events';
 import { journalsService, Journal } from '../services/journals';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -147,11 +147,12 @@ const CustomDateTimePicker = ({
 };
 
 export default function CreateEventScreen() {
+  const params = useLocalSearchParams();
   const { colors } = useTheme();
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [type, setType] = useState('mixed');
-  const [category, setCategory] = useState('life-diary');
+  const [title, setTitle] = useState(params.title as string || '');
+  const [description, setDescription] = useState(params.description as string || '');
+  const [type, setType] = useState(params.type as string || 'text');
+  const [category, setCategory] = useState(params.category as string || '');
   const [date, setDate] = useState(new Date());
   const [showDateModal, setShowDateModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -185,7 +186,7 @@ export default function CreateEventScreen() {
   const recordingTimer = useRef<NodeJS.Timeout | null>(null);
   const playbackTimer = useRef<NodeJS.Timeout | null>(null);
 
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(params.category ? [params.category as string] : []);
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
 
   // Añadir el estado para el modal

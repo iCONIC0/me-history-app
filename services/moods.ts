@@ -24,9 +24,10 @@ export const moods = {
 
   // Crear un nuevo estado de ánimo
   create: async (mood: string, date: Date): Promise<Mood> => {
+    const formattedDate = date.toISOString().slice(0, 19).replace('T', ' ');
     const response = await api.post<ApiResponse<Mood>>('/api/me/moods', {
       mood,
-      date: date.toISOString(),
+      date: formattedDate,
     });
     return response.data.data;
   },

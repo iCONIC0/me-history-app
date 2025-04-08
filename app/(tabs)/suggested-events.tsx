@@ -661,19 +661,16 @@ export default function SuggestedEventsScreen() {
   };
 
   const handleSuggestedEvent = (event: SuggestedEvent) => {
-    // Inicializar con valores por defecto consistentes
-    setSelectedEvent(event);
-    setDescription(event.description || '');
-    setMetadata({});
-    setUseJournal(false);
-    setSelectedJournalId(null);
-    setDate(new Date()); // Fecha actual por defecto
-    setImageUri(null);
-    setAudioUri(null);
-    setVideoUri(null);
-    setShowEventModal(true);
-    // Cargar las bitácoras cuando se abre el modal
-    loadJournals();
+    // Navegar a create-event con los datos prellenados
+    router.push({
+      pathname: '/create-event',
+      params: {
+        title: event.title,
+        category: event.category,
+        type: event.type || 'text',
+        description: event.description || ''
+      }
+    });
   };
 
   // Función para cargar las bitácoras

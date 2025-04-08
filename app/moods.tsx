@@ -197,6 +197,8 @@ export default function MoodsScreen() {
                 size={24}
                 color="#202024"
               />
+              <Text>{totalMoods}</Text>
+
             </View>
             <View style={styles.progressBarContainer}>
               <View 
